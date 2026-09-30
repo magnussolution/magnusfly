@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'l10n/generated/app_localizations.dart';
+import 'pilot/pilot_screen.dart';
 
 void main() {
   runApp(const MagnusFlyApp());
@@ -114,7 +115,13 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => PilotScreen(),
+                  ),
+                );
+              },
               icon: const Icon(Icons.paragliding_outlined),
               label: Text(l10n.acceptPilot),
             ),

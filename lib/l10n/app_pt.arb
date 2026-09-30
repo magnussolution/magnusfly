@@ -13,5 +13,19 @@
   "english": "English",
   "roleRuleTitle": "Regra da conexão",
   "roleRuleBody": "Quem inicia a conexão é o Motorista. Quem aceita a transmissão é o Piloto.",
-  "pilotPhoneNote": "O Piloto pode manter XCTrack, Flyskyhy ou outro app de voo aberto durante o reboque."
+  "pilotPhoneNote": "O Piloto pode manter XCTrack, Flyskyhy ou outro app de voo aberto durante o reboque.",
+  "pilotScreenTitle": "Transmissão do Piloto",
+  "pilotTransmissionStarting": "Iniciando transmissão do Piloto...",
+  "pilotTransmissionActive": "Transmissão do Piloto ativa",
+  "pilotTransmissionStopped": "Transmissão do Piloto parada",
+  "pilotTransmissionError": "Erro na transmissão do Piloto",
+  "pilotBarometerUnavailable": "Este dispositivo não expõe dados do barômetro.",
+  "stopPilotTransmission": "Parar transmissão",
+  "varioLabel": "VARIO",
+  "aglLabel": "AGL",
+  "pressureLabel": "Pressão",
+  "relativeAltitudeLabel": "Altitude relativa",
+  "metersPerSecondUnit": "m/s",
+  "metersUnit": "m",
+  "hectopascalUnit": "hPa"
 }

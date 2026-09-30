@@ -52,4 +52,47 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pilotPhoneNote =>
       'The Pilot may keep XCTrack, Flyskyhy, or another flight app open during towing.';
+
+  @override
+  String get pilotScreenTitle => 'Pilot transmission';
+
+  @override
+  String get pilotTransmissionStarting => 'Starting Pilot transmission...';
+
+  @override
+  String get pilotTransmissionActive => 'Pilot transmission active';
+
+  @override
+  String get pilotTransmissionStopped => 'Pilot transmission stopped';
+
+  @override
+  String get pilotTransmissionError => 'Pilot transmission error';
+
+  @override
+  String get pilotBarometerUnavailable =>
+      'This device does not expose barometer data.';
+
+  @override
+  String get stopPilotTransmission => 'Stop transmission';
+
+  @override
+  String get varioLabel => 'VARIO';
+
+  @override
+  String get aglLabel => 'AGL';
+
+  @override
+  String get pressureLabel => 'Pressure';
+
+  @override
+  String get relativeAltitudeLabel => 'Relative altitude';
+
+  @override
+  String get metersPerSecondUnit => 'm/s';
+
+  @override
+  String get metersUnit => 'm';
+
+  @override
+  String get hectopascalUnit => 'hPa';
 }

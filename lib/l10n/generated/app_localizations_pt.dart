@@ -52,4 +52,47 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get pilotPhoneNote =>
       'O Piloto pode manter XCTrack, Flyskyhy ou outro app de voo aberto durante o reboque.';
+
+  @override
+  String get pilotScreenTitle => 'Transmissão do Piloto';
+
+  @override
+  String get pilotTransmissionStarting => 'Iniciando transmissão do Piloto...';
+
+  @override
+  String get pilotTransmissionActive => 'Transmissão do Piloto ativa';
+
+  @override
+  String get pilotTransmissionStopped => 'Transmissão do Piloto parada';
+
+  @override
+  String get pilotTransmissionError => 'Erro na transmissão do Piloto';
+
+  @override
+  String get pilotBarometerUnavailable =>
+      'Este dispositivo não expõe dados do barômetro.';
+
+  @override
+  String get stopPilotTransmission => 'Parar transmissão';
+
+  @override
+  String get varioLabel => 'VARIO';
+
+  @override
+  String get aglLabel => 'AGL';
+
+  @override
+  String get pressureLabel => 'Pressão';
+
+  @override
+  String get relativeAltitudeLabel => 'Altitude relativa';
+
+  @override
+  String get metersPerSecondUnit => 'm/s';
+
+  @override
+  String get metersUnit => 'm';
+
+  @override
+  String get hectopascalUnit => 'hPa';
 }

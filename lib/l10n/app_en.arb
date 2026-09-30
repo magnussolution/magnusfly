@@ -16,5 +16,19 @@
   "english": "English",
   "roleRuleTitle": "Connection rule",
   "roleRuleBody": "Whoever starts the connection is the Driver. Whoever accepts transmission is the Pilot.",
-  "pilotPhoneNote": "The Pilot may keep XCTrack, Flyskyhy, or another flight app open during towing."
+  "pilotPhoneNote": "The Pilot may keep XCTrack, Flyskyhy, or another flight app open during towing.",
+  "pilotScreenTitle": "Pilot transmission",
+  "pilotTransmissionStarting": "Starting Pilot transmission...",
+  "pilotTransmissionActive": "Pilot transmission active",
+  "pilotTransmissionStopped": "Pilot transmission stopped",
+  "pilotTransmissionError": "Pilot transmission error",
+  "pilotBarometerUnavailable": "This device does not expose barometer data.",
+  "stopPilotTransmission": "Stop transmission",
+  "varioLabel": "VARIO",
+  "aglLabel": "AGL",
+  "pressureLabel": "Pressure",
+  "relativeAltitudeLabel": "Relative altitude",
+  "metersPerSecondUnit": "m/s",
+  "metersUnit": "m",
+  "hectopascalUnit": "hPa"
 }

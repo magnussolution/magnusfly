@@ -183,6 +183,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The Pilot may keep XCTrack, Flyskyhy, or another flight app open during towing.'**
   String get pilotPhoneNote;
+
+  /// No description provided for @pilotScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot transmission'**
+  String get pilotScreenTitle;
+
+  /// No description provided for @pilotTransmissionStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting Pilot transmission...'**
+  String get pilotTransmissionStarting;
+
+  /// No description provided for @pilotTransmissionActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot transmission active'**
+  String get pilotTransmissionActive;
+
+  /// No description provided for @pilotTransmissionStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot transmission stopped'**
+  String get pilotTransmissionStopped;
+
+  /// No description provided for @pilotTransmissionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot transmission error'**
+  String get pilotTransmissionError;
+
+  /// No description provided for @pilotBarometerUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This device does not expose barometer data.'**
+  String get pilotBarometerUnavailable;
+
+  /// No description provided for @stopPilotTransmission.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop transmission'**
+  String get stopPilotTransmission;
+
+  /// No description provided for @varioLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'VARIO'**
+  String get varioLabel;
+
+  /// No description provided for @aglLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AGL'**
+  String get aglLabel;
+
+  /// No description provided for @pressureLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pressure'**
+  String get pressureLabel;
+
+  /// No description provided for @relativeAltitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Relative altitude'**
+  String get relativeAltitudeLabel;
+
+  /// No description provided for @metersPerSecondUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'m/s'**
+  String get metersPerSecondUnit;
+
+  /// No description provided for @metersUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'m'**
+  String get metersUnit;
+
+  /// No description provided for @hectopascalUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'hPa'**
+  String get hectopascalUnit;
 }
 
 class _AppLocalizationsDelegate
