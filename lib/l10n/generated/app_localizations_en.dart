@@ -149,10 +149,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pilotProfileRequired =>
-      'Fill in username, name, email, and country.';
+      'Fill in username, name, email, country, and password.';
 
   @override
   String get pilotUsernameRequired => 'Enter your username.';
+
+  @override
+  String get pilotLoginRequired => 'Enter username and password.';
 
   @override
   String get pilotAcceptSession => 'Accept Driver connection';
@@ -178,4 +181,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logoutButton => 'Logout';
+
+  @override
+  String get passwordLabel => 'Password';
 }

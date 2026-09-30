@@ -25,6 +25,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   Object? _error;
   bool _isWorking = false;
 
@@ -34,6 +35,7 @@ class _AuthScreenState extends State<AuthScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _countryController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -48,26 +50,37 @@ class _AuthScreenState extends State<AuthScreen> {
     if (profile.username.isEmpty ||
         profile.name.isEmpty ||
         profile.email.isEmpty ||
-        profile.country.isEmpty) {
+        profile.country.isEmpty ||
+        _passwordController.text.isEmpty) {
       setState(() {
         _error = AppLocalizations.of(context).pilotProfileRequired;
       });
       return;
     }
 
-    await _runAuth(() => widget.apiClient.registerPilot(profile));
+    await _runAuth(
+      () => widget.apiClient.registerPilot(
+        profile: profile,
+        password: _passwordController.text,
+      ),
+    );
   }
 
   Future<void> _login() async {
     final username = _usernameController.text.trim().toLowerCase();
-    if (username.isEmpty) {
+    if (username.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        _error = AppLocalizations.of(context).pilotUsernameRequired;
+        _error = AppLocalizations.of(context).pilotLoginRequired;
       });
       return;
     }
 
-    await _runAuth(() => widget.apiClient.loginPilot(username));
+    await _runAuth(
+      () => widget.apiClient.loginPilot(
+        username: username,
+        password: _passwordController.text,
+      ),
+    );
   }
 
   Future<void> _runAuth(Future<PilotProfile> Function() action) async {
@@ -154,6 +167,15 @@ class _AuthScreenState extends State<AuthScreen> {
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 labelText: l10n.pilotCountryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: l10n.passwordLabel,
               ),
             ),
             const SizedBox(height: 16),

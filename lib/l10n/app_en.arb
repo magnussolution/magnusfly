@@ -48,8 +48,9 @@
   "pilotNameLabel": "Name",
   "pilotEmailLabel": "Email",
   "pilotCountryLabel": "Country",
-  "pilotProfileRequired": "Fill in username, name, email, and country.",
+  "pilotProfileRequired": "Fill in username, name, email, country, and password.",
   "pilotUsernameRequired": "Enter your username.",
+  "pilotLoginRequired": "Enter username and password.",
   "pilotAcceptSession": "Accept Driver connection",
   "pilotAcceptingSession": "Accepting connection...",
   "authTitle": "Pilot profile",
@@ -57,5 +58,6 @@
   "authError": "Login error",
   "registerButton": "Register",
   "loginButton": "Login",
-  "logoutButton": "Logout"
+  "logoutButton": "Logout",
+  "passwordLabel": "Password"
 }

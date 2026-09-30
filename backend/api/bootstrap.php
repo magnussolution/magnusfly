@@ -140,6 +140,20 @@ function magnusfly_validate_email(string $email): string
     return $email;
 }
 
+function magnusfly_require_password(array $data): string
+{
+    $password = magnusfly_require_string($data, 'password');
+    if (strlen($password) < 8) {
+        magnusfly_error(
+            'invalid_password',
+            'Password must have at least 8 characters.',
+            400
+        );
+    }
+
+    return $password;
+}
+
 function magnusfly_token(): string
 {
     return bin2hex(random_bytes(32));

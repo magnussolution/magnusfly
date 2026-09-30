@@ -45,8 +45,9 @@
   "pilotNameLabel": "Nome",
   "pilotEmailLabel": "Email",
   "pilotCountryLabel": "País",
-  "pilotProfileRequired": "Preencha username, nome, email e país.",
+  "pilotProfileRequired": "Preencha username, nome, email, país e senha.",
   "pilotUsernameRequired": "Informe seu username.",
+  "pilotLoginRequired": "Informe username e senha.",
   "pilotAcceptSession": "Aceitar conexão do Motorista",
   "pilotAcceptingSession": "Aceitando conexão...",
   "authTitle": "Cadastro do Piloto",
@@ -54,5 +55,6 @@
   "authError": "Erro de login",
   "registerButton": "Cadastrar",
   "loginButton": "Login",
-  "logoutButton": "Logout"
+  "logoutButton": "Logout",
+  "passwordLabel": "Senha"
 }

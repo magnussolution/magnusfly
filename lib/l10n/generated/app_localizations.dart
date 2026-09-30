@@ -373,7 +373,7 @@ abstract class AppLocalizations {
   /// No description provided for @pilotProfileRequired.
   ///
   /// In en, this message translates to:
-  /// **'Fill in username, name, email, and country.'**
+  /// **'Fill in username, name, email, country, and password.'**
   String get pilotProfileRequired;
 
   /// No description provided for @pilotUsernameRequired.
@@ -381,6 +381,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter your username.'**
   String get pilotUsernameRequired;
+
+  /// No description provided for @pilotLoginRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter username and password.'**
+  String get pilotLoginRequired;
 
   /// No description provided for @pilotAcceptSession.
   ///
@@ -429,6 +435,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logout'**
   String get logoutButton;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
 }
 
 class _AppLocalizationsDelegate

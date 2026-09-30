@@ -94,12 +94,16 @@ class MagnusFlyApiClient {
   final http.Client _httpClient;
   final Uri _baseUri;
 
-  Future<PilotProfile> registerPilot(PilotProfile profile) async {
+  Future<PilotProfile> registerPilot({
+    required PilotProfile profile,
+    required String password,
+  }) async {
     final json = await _post(_resolve('pilots/register.php'), {
       'username': profile.username,
       'name': profile.name,
       'email': profile.email,
       'country': profile.country,
+      'password': password,
     });
     final pilot = json['pilot'] as Map<String, dynamic>;
 
@@ -111,9 +115,13 @@ class MagnusFlyApiClient {
     );
   }
 
-  Future<PilotProfile> loginPilot(String username) async {
+  Future<PilotProfile> loginPilot({
+    required String username,
+    required String password,
+  }) async {
     final json = await _post(_resolve('pilots/login.php'), {
       'username': username.trim().toLowerCase(),
+      'password': password,
     });
     final pilot = json['pilot'] as Map<String, dynamic>;
 

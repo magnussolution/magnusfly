@@ -14,17 +14,20 @@ magnusfly_run(function (): void {
         magnusfly_require_string($input, 'email')
     );
     $country = magnusfly_require_string($input, 'country');
+    $password = magnusfly_require_password($input);
+    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
     $pdo = magnusfly_db();
     $statement = $pdo->prepare(
-        'INSERT INTO pilot_profiles (username, name, email, country)
-         VALUES (?, ?, ?, ?)
+        'INSERT INTO pilot_profiles (username, name, email, country, password_hash)
+         VALUES (?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
             name = VALUES(name),
             email = VALUES(email),
-            country = VALUES(country)'
+            country = VALUES(country),
+            password_hash = VALUES(password_hash)'
     );
-    $statement->execute([$username, $name, $email, $country]);
+    $statement->execute([$username, $name, $email, $country, $passwordHash]);
 
     magnusfly_response([
         'ok' => true,
