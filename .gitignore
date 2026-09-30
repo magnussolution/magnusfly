@@ -1,0 +1,39 @@
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# IDE and OS files
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12*
+*.p8*
+
+# iOS signing and service credentials
+ios/Runner/GoogleService-Info.plist
+ios/**/*.mobileprovision
+ios/**/*.cer
+ios/**/*.p12
+
+# Android signing and service credentials
+android/key.properties
+android/app/.jks
+android/app/*.jks
+android/app/*.keystore
+
+# Backend runtime files
+backend/logs/
+backend/.env
