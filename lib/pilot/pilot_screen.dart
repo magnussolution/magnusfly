@@ -2,24 +2,36 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../api/magnusfly_api_client.dart';
 import '../flight/altitude_engine.dart';
 import '../flight/variometer_engine.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'pilot_background_engine.dart';
+import 'pilot_profile_store.dart';
 
 class PilotScreen extends StatefulWidget {
   PilotScreen({
+    MagnusFlyApiClient? apiClient,
     PilotBackgroundEngine? pilotBackgroundEngine,
+    this.profileStore = const PilotProfileStore(),
     super.key,
-  }) : pilotBackgroundEngine = pilotBackgroundEngine ?? PilotBackgroundEngine();
+  })  : apiClient = apiClient ?? MagnusFlyApiClient(),
+        pilotBackgroundEngine =
+            pilotBackgroundEngine ?? PilotBackgroundEngine();
 
+  final MagnusFlyApiClient apiClient;
   final PilotBackgroundEngine pilotBackgroundEngine;
+  final PilotProfileStore profileStore;
 
   @override
   State<PilotScreen> createState() => _PilotScreenState();
 }
 
 class _PilotScreenState extends State<PilotScreen> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
   final AglEngine _aglEngine = AglEngine();
   final VariometerEngine _variometerEngine =
       VariometerEngine(smoothingFactor: 0.35);
@@ -27,25 +39,111 @@ class _PilotScreenState extends State<PilotScreen> {
   PilotBarometerSample? _lastBarometerSample;
   AltitudeSample? _lastAltitudeSample;
   VarioSample? _lastVarioSample;
+  String? _pilotToken;
   Object? _error;
-  bool _isStarting = true;
+  bool _isStarting = false;
+  bool _isAccepting = false;
   bool _isRunning = false;
 
   @override
   void initState() {
     super.initState();
-    unawaited(_startPilotTransmission());
+    unawaited(_loadProfile());
   }
 
   @override
   void dispose() {
+    _usernameController.dispose();
+    _nameController.dispose();
+    _emailController.dispose();
+    _countryController.dispose();
     unawaited(_subscription?.cancel());
     unawaited(widget.pilotBackgroundEngine.stop());
     super.dispose();
   }
 
+  Future<void> _loadProfile() async {
+    final profile = await widget.profileStore.load();
+    if (!mounted || profile == null) {
+      return;
+    }
+
+    setState(() {
+      _usernameController.text = profile.username;
+      _nameController.text = profile.name;
+      _emailController.text = profile.email;
+      _countryController.text = profile.country;
+    });
+  }
+
+  Future<PilotProfile?> _saveProfileToDatabase() async {
+    final profile = PilotProfile(
+      username: _usernameController.text.trim().toLowerCase(),
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      country: _countryController.text.trim(),
+    );
+
+    if (profile.username.isEmpty ||
+        profile.name.isEmpty ||
+        profile.email.isEmpty ||
+        profile.country.isEmpty) {
+      setState(() {
+        _error = AppLocalizations.of(context).pilotProfileRequired;
+      });
+      return null;
+    }
+
+    final savedProfile = await widget.apiClient.registerPilot(profile);
+    await widget.profileStore.save(savedProfile);
+
+    return savedProfile;
+  }
+
+  Future<void> _acceptSessionAndStart() async {
+    setState(() {
+      _isAccepting = true;
+      _error = null;
+    });
+
+    try {
+      final profile = await _saveProfileToDatabase();
+      if (profile == null) {
+        setState(() {
+          _isAccepting = false;
+        });
+        return;
+      }
+
+      final acceptedSession = await widget.apiClient.acceptSession(
+        pilotUsername: profile.username,
+      );
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _pilotToken = acceptedSession.pilotToken;
+        _isAccepting = false;
+      });
+      await _startPilotTransmission();
+    } on Object catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isAccepting = false;
+        _error = error;
+      });
+    }
+  }
+
   Future<void> _startPilotTransmission() async {
     try {
+      setState(() {
+        _isStarting = true;
+      });
       final isAvailable = await widget.pilotBackgroundEngine.isAvailable();
       if (!isAvailable) {
         setState(() {
@@ -86,6 +184,22 @@ class _PilotScreenState extends State<PilotScreen> {
       altitudeMeters: altitudeSample.altitudeMeters,
       timestamp: sample.timestamp,
     );
+    final verticalSpeed = varioSample.verticalSpeedMetersPerSecond;
+    final aglMeters = altitudeSample.aglMeters;
+    final pilotToken = _pilotToken;
+
+    if (pilotToken != null && verticalSpeed != null && aglMeters != null) {
+      unawaited(
+        widget.apiClient.sendPilotTelemetry(
+          pilotToken: pilotToken,
+          varioMps: verticalSpeed,
+          aglM: aglMeters,
+          pressureHpa: sample.pressureHpa,
+          relativeAltitudeM: sample.relativeAltitudeMeters,
+          timestampMillis: sample.timestamp.millisecondsSinceEpoch,
+        ),
+      );
+    }
 
     setState(() {
       _lastBarometerSample = sample;
@@ -106,6 +220,7 @@ class _PilotScreenState extends State<PilotScreen> {
 
     setState(() {
       _isRunning = false;
+      _pilotToken = null;
     });
   }
 
@@ -127,6 +242,25 @@ class _PilotScreenState extends State<PilotScreen> {
               error: _error,
             ),
             const SizedBox(height: 24),
+            if (!_isRunning) ...[
+              _PilotProfileForm(
+                usernameController: _usernameController,
+                nameController: _nameController,
+                emailController: _emailController,
+                countryController: _countryController,
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: _isAccepting ? null : _acceptSessionAndStart,
+                icon: const Icon(Icons.link_outlined),
+                label: Text(
+                  _isAccepting
+                      ? l10n.pilotAcceptingSession
+                      : l10n.pilotAcceptSession,
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             _MetricGrid(
               varioMetersPerSecond:
                   _lastVarioSample?.verticalSpeedMetersPerSecond,
@@ -201,6 +335,66 @@ class _StatusBanner extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PilotProfileForm extends StatelessWidget {
+  const _PilotProfileForm({
+    required this.usernameController,
+    required this.nameController,
+    required this.emailController,
+    required this.countryController,
+  });
+
+  final TextEditingController usernameController;
+  final TextEditingController nameController;
+  final TextEditingController emailController;
+  final TextEditingController countryController;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return Column(
+      children: [
+        TextField(
+          controller: usernameController,
+          textCapitalization: TextCapitalization.none,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            labelText: l10n.pilotUsernameLabel,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: nameController,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            labelText: l10n.pilotNameLabel,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: emailController,
+          keyboardType: TextInputType.emailAddress,
+          textCapitalization: TextCapitalization.none,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            labelText: l10n.pilotEmailLabel,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: countryController,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            labelText: l10n.pilotCountryLabel,
+          ),
+        ),
+      ],
     );
   }
 }

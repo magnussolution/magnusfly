@@ -6,21 +6,27 @@ require dirname(__DIR__) . '/bootstrap.php';
 
 magnusfly_run(function (): void {
     $input = magnusfly_json_input();
-    $code = strtoupper(magnusfly_require_string($input, 'code'));
+    $pilotUsername = magnusfly_normalize_username(
+        magnusfly_require_string($input, 'pilotUsername')
+    );
     $pilotToken = magnusfly_token();
 
     $pdo = magnusfly_db();
     $statement = $pdo->prepare(
-        'SELECT id, status FROM tow_sessions WHERE code = ? LIMIT 1'
+        'SELECT id, code, status
+         FROM tow_sessions
+         WHERE pilot_username = ? AND status = ?
+         ORDER BY id DESC
+         LIMIT 1'
     );
-    $statement->execute([$code]);
+    $statement->execute([$pilotUsername, 'waiting']);
     $session = $statement->fetch();
     if (!$session) {
-        magnusfly_error('session_not_found', 'Session code was not found.', 404);
-    }
-
-    if ($session['status'] !== 'waiting') {
-        magnusfly_error('session_not_waiting', 'Session is not waiting for a Pilot.', 409);
+        magnusfly_error(
+            'session_not_found',
+            'No waiting Driver session was found for this Pilot.',
+            404
+        );
     }
 
     $update = $pdo->prepare(
@@ -32,7 +38,8 @@ magnusfly_run(function (): void {
         'ok' => true,
         'session' => [
             'id' => (int) $session['id'],
-            'code' => $code,
+            'code' => $session['code'],
+            'pilotUsername' => $pilotUsername,
             'pilotToken' => $pilotToken,
             'status' => 'active',
         ],

@@ -267,6 +267,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'hPa'**
   String get hectopascalUnit;
+
+  /// No description provided for @millisecondsUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'ms'**
+  String get millisecondsUnit;
+
+  /// No description provided for @driverScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver'**
+  String get driverScreenTitle;
+
+  /// No description provided for @driverPilotUsernameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot username'**
+  String get driverPilotUsernameLabel;
+
+  /// No description provided for @driverPilotUsernameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the Pilot username.'**
+  String get driverPilotUsernameRequired;
+
+  /// No description provided for @driverCreateSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Start connection'**
+  String get driverCreateSession;
+
+  /// No description provided for @driverCreatingSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating Driver session...'**
+  String get driverCreatingSession;
+
+  /// No description provided for @driverWaitingForSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to create session'**
+  String get driverWaitingForSession;
+
+  /// No description provided for @driverWaitingForPilot.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the Pilot to accept'**
+  String get driverWaitingForPilot;
+
+  /// No description provided for @driverReceivingTelemetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving Pilot telemetry'**
+  String get driverReceivingTelemetry;
+
+  /// No description provided for @driverTelemetryDelayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot telemetry is delayed'**
+  String get driverTelemetryDelayed;
+
+  /// No description provided for @driverConnectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver connection error'**
+  String get driverConnectionError;
+
+  /// No description provided for @driverSessionCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Session code'**
+  String get driverSessionCodeLabel;
+
+  /// No description provided for @delayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delay'**
+  String get delayLabel;
+
+  /// No description provided for @pilotUsernameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get pilotUsernameLabel;
+
+  /// No description provided for @pilotNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get pilotNameLabel;
+
+  /// No description provided for @pilotEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get pilotEmailLabel;
+
+  /// No description provided for @pilotCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get pilotCountryLabel;
+
+  /// No description provided for @pilotProfileRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in username, name, email, and country.'**
+  String get pilotProfileRequired;
+
+  /// No description provided for @pilotAcceptSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Driver connection'**
+  String get pilotAcceptSession;
+
+  /// No description provided for @pilotAcceptingSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepting connection...'**
+  String get pilotAcceptingSession;
 }
 
 class _AppLocalizationsDelegate

@@ -116,6 +116,30 @@ function magnusfly_require_number(array $data, string $key): float
     return (float) $data[$key];
 }
 
+function magnusfly_normalize_username(string $username): string
+{
+    $username = strtolower(trim($username));
+    if (!preg_match('/^[a-z0-9_]{3,32}$/', $username)) {
+        magnusfly_error(
+            'invalid_username',
+            'Username must have 3 to 32 letters, numbers, or underscores.',
+            400
+        );
+    }
+
+    return $username;
+}
+
+function magnusfly_validate_email(string $email): string
+{
+    $email = trim($email);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        magnusfly_error('invalid_email', 'Email is invalid.', 400);
+    }
+
+    return $email;
+}
+
 function magnusfly_token(): string
 {
     return bin2hex(random_bytes(32));

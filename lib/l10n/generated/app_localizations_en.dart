@@ -95,4 +95,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hectopascalUnit => 'hPa';
+
+  @override
+  String get millisecondsUnit => 'ms';
+
+  @override
+  String get driverScreenTitle => 'Driver';
+
+  @override
+  String get driverPilotUsernameLabel => 'Pilot username';
+
+  @override
+  String get driverPilotUsernameRequired => 'Enter the Pilot username.';
+
+  @override
+  String get driverCreateSession => 'Start connection';
+
+  @override
+  String get driverCreatingSession => 'Creating Driver session...';
+
+  @override
+  String get driverWaitingForSession => 'Waiting to create session';
+
+  @override
+  String get driverWaitingForPilot => 'Waiting for the Pilot to accept';
+
+  @override
+  String get driverReceivingTelemetry => 'Receiving Pilot telemetry';
+
+  @override
+  String get driverTelemetryDelayed => 'Pilot telemetry is delayed';
+
+  @override
+  String get driverConnectionError => 'Driver connection error';
+
+  @override
+  String get driverSessionCodeLabel => 'Session code';
+
+  @override
+  String get delayLabel => 'Delay';
+
+  @override
+  String get pilotUsernameLabel => 'Username';
+
+  @override
+  String get pilotNameLabel => 'Name';
+
+  @override
+  String get pilotEmailLabel => 'Email';
+
+  @override
+  String get pilotCountryLabel => 'Country';
+
+  @override
+  String get pilotProfileRequired =>
+      'Fill in username, name, email, and country.';
+
+  @override
+  String get pilotAcceptSession => 'Accept Driver connection';
+
+  @override
+  String get pilotAcceptingSession => 'Accepting connection...';
 }

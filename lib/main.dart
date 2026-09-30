@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'driver/driver_screen.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'pilot/pilot_screen.dart';
 
@@ -109,7 +110,13 @@ class HomeScreen extends StatelessWidget {
             Text(l10n.homeSubtitle),
             const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => DriverScreen(),
+                  ),
+                );
+              },
               icon: const Icon(Icons.directions_car_outlined),
               label: Text(l10n.startDriver),
             ),
