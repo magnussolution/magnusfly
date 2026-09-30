@@ -1,0 +1,17 @@
+{
+  "@@locale": "pt",
+  "appTitle": "MagnusFly",
+  "homeHeadline": "Variômetro remoto para reboque de parapente",
+  "homeSubtitle": "O Motorista inicia a conexão. O Piloto apenas aceita a transmissão e continua enviando VARIO e AGL enquanto usa o celular em voo.",
+  "startDriver": "Iniciar como Motorista",
+  "acceptPilot": "Aceitar como Piloto",
+  "settingsTooltip": "Configurações",
+  "settingsTitle": "Configurações",
+  "languageTitle": "Idioma",
+  "portuguese": "Português",
+  "spanish": "Español",
+  "english": "English",
+  "roleRuleTitle": "Regra da conexão",
+  "roleRuleBody": "Quem inicia a conexão é o Motorista. Quem aceita a transmissão é o Piloto.",
+  "pilotPhoneNote": "O Piloto pode manter XCTrack, Flyskyhy ou outro app de voo aberto durante o reboque."
+}

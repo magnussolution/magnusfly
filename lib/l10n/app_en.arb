@@ -1,0 +1,20 @@
+{
+  "@@locale": "en",
+  "appTitle": "MagnusFly",
+  "@appTitle": {
+    "description": "Application name."
+  },
+  "homeHeadline": "Remote variometer for paraglider towing",
+  "homeSubtitle": "The Driver starts the connection. The Pilot only accepts transmission and keeps sending VARIO and AGL while using the phone in flight.",
+  "startDriver": "Start as Driver",
+  "acceptPilot": "Accept as Pilot",
+  "settingsTooltip": "Settings",
+  "settingsTitle": "Settings",
+  "languageTitle": "Language",
+  "portuguese": "Portuguese",
+  "spanish": "Spanish",
+  "english": "English",
+  "roleRuleTitle": "Connection rule",
+  "roleRuleBody": "Whoever starts the connection is the Driver. Whoever accepts transmission is the Pilot.",
+  "pilotPhoneNote": "The Pilot may keep XCTrack, Flyskyhy, or another flight app open during towing."
+}

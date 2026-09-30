@@ -1,0 +1,17 @@
+{
+  "@@locale": "es",
+  "appTitle": "MagnusFly",
+  "homeHeadline": "Variómetro remoto para remolque de parapente",
+  "homeSubtitle": "El Conductor inicia la conexión. El Piloto solo acepta la transmisión y sigue enviando VARIO y AGL mientras usa el teléfono en vuelo.",
+  "startDriver": "Iniciar como Conductor",
+  "acceptPilot": "Aceptar como Piloto",
+  "settingsTooltip": "Configuración",
+  "settingsTitle": "Configuración",
+  "languageTitle": "Idioma",
+  "portuguese": "Portugués",
+  "spanish": "Español",
+  "english": "Inglés",
+  "roleRuleTitle": "Regla de conexión",
+  "roleRuleBody": "Quien inicia la conexión es el Conductor. Quien acepta la transmisión es el Piloto.",
+  "pilotPhoneNote": "El Piloto puede mantener XCTrack, Flyskyhy u otra app de vuelo abierta durante el remolque."
+}
