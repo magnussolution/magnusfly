@@ -28,6 +28,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final TextEditingController _passwordController = TextEditingController();
   Object? _error;
   bool _isWorking = false;
+  bool _isRegisterMode = false;
 
   @override
   void dispose() {
@@ -141,34 +142,36 @@ class _AuthScreenState extends State<AuthScreen> {
                 labelText: l10n.pilotUsernameLabel,
               ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _nameController,
-              textCapitalization: TextCapitalization.words,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: l10n.pilotNameLabel,
+            if (_isRegisterMode) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: _nameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: l10n.pilotNameLabel,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              textCapitalization: TextCapitalization.none,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: l10n.pilotEmailLabel,
+              const SizedBox(height: 12),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textCapitalization: TextCapitalization.none,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: l10n.pilotEmailLabel,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _countryController,
-              textCapitalization: TextCapitalization.words,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: l10n.pilotCountryLabel,
+              const SizedBox(height: 12),
+              TextField(
+                controller: _countryController,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: l10n.pilotCountryLabel,
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 12),
             TextField(
               controller: _passwordController,
@@ -186,17 +189,45 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 12),
             ],
-            FilledButton.icon(
-              onPressed: _isWorking ? null : _register,
-              icon: const Icon(Icons.person_add_alt_outlined),
-              label: Text(l10n.registerButton),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: _isWorking ? null : _login,
-              icon: const Icon(Icons.login_outlined),
-              label: Text(l10n.loginButton),
-            ),
+            if (_isRegisterMode) ...[
+              FilledButton.icon(
+                onPressed: _isWorking ? null : _register,
+                icon: const Icon(Icons.person_add_alt_outlined),
+                label: Text(l10n.registerButton),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _isWorking
+                    ? null
+                    : () {
+                        setState(() {
+                          _isRegisterMode = false;
+                          _error = null;
+                        });
+                      },
+                icon: const Icon(Icons.login_outlined),
+                label: Text(l10n.loginButton),
+              ),
+            ] else ...[
+              FilledButton.icon(
+                onPressed: _isWorking ? null : _login,
+                icon: const Icon(Icons.login_outlined),
+                label: Text(l10n.loginButton),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _isWorking
+                    ? null
+                    : () {
+                        setState(() {
+                          _isRegisterMode = true;
+                          _error = null;
+                        });
+                      },
+                icon: const Icon(Icons.person_add_alt_outlined),
+                label: Text(l10n.registerButton),
+              ),
+            ],
           ],
         ),
       ),
