@@ -111,6 +111,20 @@ class MagnusFlyApiClient {
     );
   }
 
+  Future<PilotProfile> loginPilot(String username) async {
+    final json = await _post(_resolve('pilots/login.php'), {
+      'username': username.trim().toLowerCase(),
+    });
+    final pilot = json['pilot'] as Map<String, dynamic>;
+
+    return PilotProfile(
+      username: pilot['username'] as String,
+      name: pilot['name'] as String,
+      email: pilot['email'] as String,
+      country: pilot['country'] as String,
+    );
+  }
+
   Future<CreatedSession> createSession({
     required String pilotUsername,
   }) async {

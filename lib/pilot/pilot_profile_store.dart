@@ -36,4 +36,12 @@ class PilotProfileStore {
     await preferences.setString(_emailKey, profile.email);
     await preferences.setString(_countryKey, profile.country);
   }
+
+  Future<void> clear() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_usernameKey);
+    await preferences.remove(_nameKey);
+    await preferences.remove(_emailKey);
+    await preferences.remove(_countryKey);
+  }
 }

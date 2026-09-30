@@ -20,6 +20,7 @@ GET  /magnusfly/api/health.php
 POST /magnusfly/api/sessions/create.php
 POST /magnusfly/api/sessions/accept.php
 POST /magnusfly/api/pilots/register.php
+POST /magnusfly/api/pilots/login.php
 POST /magnusfly/api/telemetry/pilot.php
 GET  /magnusfly/api/telemetry/latest.php?driverToken=...
 ```

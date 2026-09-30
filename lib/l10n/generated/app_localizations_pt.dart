@@ -151,8 +151,30 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pilotProfileRequired => 'Preencha username, nome, email e país.';
 
   @override
+  String get pilotUsernameRequired => 'Informe seu username.';
+
+  @override
   String get pilotAcceptSession => 'Aceitar conexão do Motorista';
 
   @override
   String get pilotAcceptingSession => 'Aceitando conexão...';
+
+  @override
+  String get authTitle => 'Cadastro do Piloto';
+
+  @override
+  String get authSubtitle =>
+      'Cadastre-se ou faça login antes de usar o MagnusFly. Motoristas usam seu username para solicitar seus dados.';
+
+  @override
+  String get authError => 'Erro de login';
+
+  @override
+  String get registerButton => 'Cadastrar';
+
+  @override
+  String get loginButton => 'Login';
+
+  @override
+  String get logoutButton => 'Logout';
 }

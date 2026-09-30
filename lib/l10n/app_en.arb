@@ -49,6 +49,13 @@
   "pilotEmailLabel": "Email",
   "pilotCountryLabel": "Country",
   "pilotProfileRequired": "Fill in username, name, email, and country.",
+  "pilotUsernameRequired": "Enter your username.",
   "pilotAcceptSession": "Accept Driver connection",
-  "pilotAcceptingSession": "Accepting connection..."
+  "pilotAcceptingSession": "Accepting connection...",
+  "authTitle": "Pilot profile",
+  "authSubtitle": "Register or log in before using MagnusFly. Drivers use your username to request your data.",
+  "authError": "Login error",
+  "registerButton": "Register",
+  "loginButton": "Login",
+  "logoutButton": "Logout"
 }

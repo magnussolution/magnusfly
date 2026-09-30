@@ -152,8 +152,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Fill in username, name, email, and country.';
 
   @override
+  String get pilotUsernameRequired => 'Enter your username.';
+
+  @override
   String get pilotAcceptSession => 'Accept Driver connection';
 
   @override
   String get pilotAcceptingSession => 'Accepting connection...';
+
+  @override
+  String get authTitle => 'Pilot profile';
+
+  @override
+  String get authSubtitle =>
+      'Register or log in before using MagnusFly. Drivers use your username to request your data.';
+
+  @override
+  String get authError => 'Login error';
+
+  @override
+  String get registerButton => 'Register';
+
+  @override
+  String get loginButton => 'Login';
+
+  @override
+  String get logoutButton => 'Logout';
 }

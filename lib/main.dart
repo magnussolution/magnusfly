@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'api/magnusfly_api_client.dart';
+import 'auth/auth_screen.dart';
 import 'driver/driver_screen.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'pilot/pilot_screen.dart';
+import 'pilot/pilot_profile_store.dart';
 
 void main() {
   runApp(const MagnusFlyApp());
@@ -17,11 +20,49 @@ class MagnusFlyApp extends StatefulWidget {
 }
 
 class _MagnusFlyAppState extends State<MagnusFlyApp> {
+  final PilotProfileStore _profileStore = const PilotProfileStore();
   Locale? _locale;
+  PilotProfile? _profile;
+  bool _isLoadingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await _profileStore.load();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _profile = profile;
+      _isLoadingProfile = false;
+    });
+  }
 
   void _setLocale(Locale? locale) {
     setState(() {
       _locale = locale;
+    });
+  }
+
+  void _setProfile(PilotProfile profile) {
+    setState(() {
+      _profile = profile;
+    });
+  }
+
+  Future<void> _logout() async {
+    await _profileStore.clear();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _profile = null;
     });
   }
 
@@ -42,9 +83,28 @@ class _MagnusFlyAppState extends State<MagnusFlyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: HomeScreen(
-        selectedLocale: _locale,
-        onLocaleChanged: _setLocale,
+      home: _isLoadingProfile
+          ? const _LoadingScreen()
+          : _profile == null
+              ? AuthScreen(onAuthenticated: _setProfile)
+              : HomeScreen(
+                  profile: _profile!,
+                  selectedLocale: _locale,
+                  onLocaleChanged: _setLocale,
+                  onLogout: _logout,
+                ),
+    );
+  }
+}
+
+class _LoadingScreen extends StatelessWidget {
+  const _LoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }
@@ -66,13 +126,17 @@ Locale _resolveLocale(Locale? locale, Iterable<Locale> supportedLocales) {
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
+    required this.profile,
     required this.selectedLocale,
     required this.onLocaleChanged,
+    required this.onLogout,
     super.key,
   });
 
+  final PilotProfile profile;
   final Locale? selectedLocale;
   final ValueChanged<Locale?> onLocaleChanged;
+  final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +146,17 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(l10n.appTitle),
         actions: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text('@${profile.username}'),
+            ),
+          ),
+          IconButton(
+            tooltip: l10n.logoutButton,
+            icon: const Icon(Icons.logout_outlined),
+            onPressed: onLogout,
+          ),
           IconButton(
             tooltip: l10n.settingsTooltip,
             icon: const Icon(Icons.settings_outlined),
@@ -125,7 +200,7 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (context) => PilotScreen(),
+                    builder: (context) => PilotScreen(profile: profile),
                   ),
                 );
               },

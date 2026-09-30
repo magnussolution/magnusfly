@@ -46,6 +46,13 @@
   "pilotEmailLabel": "Email",
   "pilotCountryLabel": "País",
   "pilotProfileRequired": "Preencha username, nome, email e país.",
+  "pilotUsernameRequired": "Informe seu username.",
   "pilotAcceptSession": "Aceitar conexão do Motorista",
-  "pilotAcceptingSession": "Aceitando conexão..."
+  "pilotAcceptingSession": "Aceitando conexão...",
+  "authTitle": "Cadastro do Piloto",
+  "authSubtitle": "Cadastre-se ou faça login antes de usar o MagnusFly. Motoristas usam seu username para solicitar seus dados.",
+  "authError": "Erro de login",
+  "registerButton": "Cadastrar",
+  "loginButton": "Login",
+  "logoutButton": "Logout"
 }

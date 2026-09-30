@@ -376,6 +376,12 @@ abstract class AppLocalizations {
   /// **'Fill in username, name, email, and country.'**
   String get pilotProfileRequired;
 
+  /// No description provided for @pilotUsernameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your username.'**
+  String get pilotUsernameRequired;
+
   /// No description provided for @pilotAcceptSession.
   ///
   /// In en, this message translates to:
@@ -387,6 +393,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accepting connection...'**
   String get pilotAcceptingSession;
+
+  /// No description provided for @authTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot profile'**
+  String get authTitle;
+
+  /// No description provided for @authSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Register or log in before using MagnusFly. Drivers use your username to request your data.'**
+  String get authSubtitle;
+
+  /// No description provided for @authError.
+  ///
+  /// In en, this message translates to:
+  /// **'Login error'**
+  String get authError;
+
+  /// No description provided for @registerButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Register'**
+  String get registerButton;
+
+  /// No description provided for @loginButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get loginButton;
+
+  /// No description provided for @logoutButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logoutButton;
 }
 
 class _AppLocalizationsDelegate
