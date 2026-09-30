@@ -137,6 +137,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get delayLabel => 'Atraso';
 
   @override
+  String get driverVarioSoundLabel => 'Sonido del vario';
+
+  @override
   String get pilotUsernameLabel => 'Username';
 
   @override

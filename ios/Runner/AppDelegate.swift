@@ -1,4 +1,5 @@
 import Flutter
+import AVFoundation
 import CoreMotion
 import CoreLocation
 import UIKit
@@ -10,6 +11,8 @@ import UIKit
   private var barometerEventSink: FlutterEventSink?
   private var pilotBackgroundTask: UIBackgroundTaskIdentifier = .invalid
   private var pilotEngineRunning = false
+  private let varioAudioEngine = AVAudioEngine()
+  private var varioAudioNodes: [AVAudioPlayerNode] = []
 
   override func application(
     _ application: UIApplication,
@@ -21,6 +24,100 @@ import UIKit
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     configurePilotBackgroundChannels(engineBridge.applicationRegistrar.messenger())
+    configureDriverVarioAudioChannel(engineBridge.applicationRegistrar.messenger())
+  }
+
+  private func configureDriverVarioAudioChannel(_ messenger: FlutterBinaryMessenger) {
+    let methodChannel = FlutterMethodChannel(
+      name: "com.magnussolution.magnusfly/driver_vario_audio",
+      binaryMessenger: messenger
+    )
+    methodChannel.setMethodCallHandler { [weak self] call, result in
+      guard let self else {
+        result(FlutterError(code: "unavailable", message: "Vario audio is unavailable.", details: nil))
+        return
+      }
+
+      switch call.method {
+      case "playBeep":
+        guard
+          let arguments = call.arguments as? [String: Any],
+          let frequencyHz = arguments["frequencyHz"] as? Double,
+          let durationMs = arguments["durationMs"] as? Int
+        else {
+          result(FlutterError(code: "invalid_arguments", message: "Invalid beep arguments.", details: nil))
+          return
+        }
+
+        let volume = arguments["volume"] as? Double ?? 0.7
+        self.playDriverVarioBeep(
+          frequencyHz: frequencyHz,
+          durationMs: durationMs,
+          volume: volume
+        )
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  private func playDriverVarioBeep(frequencyHz: Double, durationMs: Int, volume: Double) {
+    let sampleRate = 44100.0
+    let durationSeconds = max(0.03, Double(durationMs) / 1000.0)
+    let frameCount = AVAudioFrameCount(sampleRate * durationSeconds)
+    guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
+          let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),
+          let samples = buffer.floatChannelData?[0] else {
+      return
+    }
+
+    buffer.frameLength = frameCount
+    let amplitude = Float(max(0, min(volume, 1)) * 0.35)
+    let fadeFrames = max(1, Int(sampleRate * 0.006))
+
+    for frame in 0..<Int(frameCount) {
+      let progress = Double(frame) / sampleRate
+      let envelopeIn = min(1.0, Double(frame) / Double(fadeFrames))
+      let envelopeOut = min(1.0, Double(Int(frameCount) - frame) / Double(fadeFrames))
+      let envelope = Float(min(envelopeIn, envelopeOut))
+      samples[frame] = Float(sin(2.0 * Double.pi * frequencyHz * progress)) * amplitude * envelope
+    }
+
+    do {
+      try AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
+      try AVAudioSession.sharedInstance().setActive(true)
+    } catch {
+      return
+    }
+
+    let playerNode = AVAudioPlayerNode()
+    varioAudioNodes.append(playerNode)
+    varioAudioEngine.attach(playerNode)
+    varioAudioEngine.connect(playerNode, to: varioAudioEngine.mainMixerNode, format: format)
+
+    if !varioAudioEngine.isRunning {
+      do {
+        try varioAudioEngine.start()
+      } catch {
+        varioAudioEngine.detach(playerNode)
+        varioAudioNodes.removeAll { $0 === playerNode }
+        return
+      }
+    }
+
+    playerNode.scheduleBuffer(buffer, at: nil, options: []) { [weak self, weak playerNode] in
+      DispatchQueue.main.async {
+        guard let self, let playerNode else {
+          return
+        }
+
+        playerNode.stop()
+        self.varioAudioEngine.detach(playerNode)
+        self.varioAudioNodes.removeAll { $0 === playerNode }
+      }
+    }
+    playerNode.play()
   }
 
   private func configurePilotBackgroundChannels(_ messenger: FlutterBinaryMessenger) {

@@ -136,6 +136,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get delayLabel => 'Atraso';
 
   @override
+  String get driverVarioSoundLabel => 'Som do vario';
+
+  @override
   String get pilotUsernameLabel => 'Username';
 
   @override

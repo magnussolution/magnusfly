@@ -346,6 +346,12 @@ abstract class AppLocalizations {
   /// **'Delay'**
   String get delayLabel;
 
+  /// No description provided for @driverVarioSoundLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Vario sound'**
+  String get driverVarioSoundLabel;
+
   /// No description provided for @pilotUsernameLabel.
   ///
   /// In en, this message translates to:

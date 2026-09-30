@@ -4,14 +4,18 @@ import 'package:flutter/material.dart';
 
 import '../api/magnusfly_api_client.dart';
 import '../l10n/generated/app_localizations.dart';
+import 'driver_vario_audio.dart';
 
 class DriverScreen extends StatefulWidget {
   DriverScreen({
     MagnusFlyApiClient? apiClient,
+    DriverVarioAudio? varioAudio,
     super.key,
-  }) : apiClient = apiClient ?? MagnusFlyApiClient();
+  })  : apiClient = apiClient ?? MagnusFlyApiClient(),
+        varioAudio = varioAudio ?? DriverVarioAudio();
 
   final MagnusFlyApiClient apiClient;
+  final DriverVarioAudio varioAudio;
 
   @override
   State<DriverScreen> createState() => _DriverScreenState();
@@ -25,6 +29,7 @@ class _DriverScreenState extends State<DriverScreen> {
   Timer? _pollTimer;
   Object? _error;
   bool _isStarting = false;
+  bool _audioEnabled = true;
 
   @override
   void initState() {
@@ -35,6 +40,7 @@ class _DriverScreenState extends State<DriverScreen> {
   void dispose() {
     _pilotUsernameController.dispose();
     _pollTimer?.cancel();
+    widget.varioAudio.dispose();
     super.dispose();
   }
 
@@ -100,6 +106,7 @@ class _DriverScreenState extends State<DriverScreen> {
         _snapshot = snapshot;
         _error = null;
       });
+      _updateVarioAudio(snapshot);
     } on Object catch (error) {
       if (!mounted) {
         return;
@@ -108,7 +115,16 @@ class _DriverScreenState extends State<DriverScreen> {
       setState(() {
         _error = error;
       });
+      widget.varioAudio.stop();
     }
+  }
+
+  void _updateVarioAudio(DriverTelemetrySnapshot snapshot) {
+    final telemetry = snapshot.telemetry;
+    widget.varioAudio.update(
+      varioMetersPerSecond: telemetry?.varioMps,
+      telemetryFresh: telemetry != null && telemetry.receivedAgeMs <= 3000,
+    );
   }
 
   @override
@@ -150,6 +166,21 @@ class _DriverScreenState extends State<DriverScreen> {
             ],
             if (_session != null) _SessionCodePanel(code: _session!.code),
             const SizedBox(height: 24),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.driverVarioSoundLabel),
+              value: _audioEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _audioEnabled = value;
+                });
+                widget.varioAudio.enabled = value;
+                if (value && _snapshot != null) {
+                  _updateVarioAudio(_snapshot!);
+                }
+              },
+            ),
+            const SizedBox(height: 12),
             _DriverMetricGrid(
               varioMetersPerSecond: telemetry?.varioMps,
               aglMeters: telemetry?.aglM,

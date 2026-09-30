@@ -41,6 +41,7 @@
   "driverConnectionError": "Erro na conexão do Motorista",
   "driverSessionCodeLabel": "Código da sessão",
   "delayLabel": "Atraso",
+  "driverVarioSoundLabel": "Som do vario",
   "pilotUsernameLabel": "Username",
   "pilotNameLabel": "Nome",
   "pilotEmailLabel": "Email",

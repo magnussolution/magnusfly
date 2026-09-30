@@ -44,6 +44,7 @@
   "driverConnectionError": "Driver connection error",
   "driverSessionCodeLabel": "Session code",
   "delayLabel": "Delay",
+  "driverVarioSoundLabel": "Vario sound",
   "pilotUsernameLabel": "Username",
   "pilotNameLabel": "Name",
   "pilotEmailLabel": "Email",
