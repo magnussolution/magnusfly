@@ -46,7 +46,7 @@ Health, financial, contacts, messages, photos/videos/audio/files/calendar:
 
 - Data is transmitted over HTTPS.
 - Passwords are sent over HTTPS and stored by the backend as password hashes.
-- The app does not provide an in-app account deletion workflow yet. Use the privacy/support contact for deletion requests until that feature is implemented.
+- Account deletion is available in app Settings and at https://magnussolution.com/magnusfly/account-deletion.html. Deletion removes the pilot profile, that pilot's towing sessions, and associated telemetry.
 
 ## Foreground service declaration
 

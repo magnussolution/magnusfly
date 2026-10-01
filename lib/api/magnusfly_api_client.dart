@@ -133,6 +133,17 @@ class MagnusFlyApiClient {
     );
   }
 
+  Future<void> deletePilot({
+    required PilotProfile profile,
+    required String password,
+  }) async {
+    await _post(_resolve('pilots/delete.php'), {
+      'username': profile.username,
+      'email': profile.email,
+      'password': password,
+    });
+  }
+
   Future<CreatedSession> createSession({
     required String pilotUsername,
   }) async {

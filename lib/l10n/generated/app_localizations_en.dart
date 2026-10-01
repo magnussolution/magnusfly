@@ -197,7 +197,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyPolicySummary =>
-      'MagnusFly uses your username, name, email, country, password, and towing session telemetry to provide remote variometer transmission between a Pilot and a Driver. Telemetry may include VARIO, AGL, pressure, relative altitude, timestamps, and connection status. Data is sent to the MagnusFly backend over HTTPS and is used only to operate the app, authenticate users, and deliver pilot data to the driver connected to the session. MagnusFly does not sell personal data and does not use advertising SDKs. To request account or data deletion, contact MagnusSolution through the support channel listed on the public privacy policy page.';
+      'MagnusFly uses your username, name, email, country, password, and towing session telemetry to provide remote variometer transmission between a Pilot and a Driver. Telemetry may include VARIO, AGL, pressure, relative altitude, timestamps, and connection status. Data is sent to the MagnusFly backend over HTTPS and is used only to operate the app, authenticate users, and deliver pilot data to the driver connected to the session. MagnusFly does not sell personal data and does not use advertising SDKs. Delete your account in the app or at https://magnussolution.com/magnusfly/account-deletion.html.';
+
+  @override
+  String get deleteAccountTitle => 'Delete account';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'Permanently delete your profile and associated data';
+
+  @override
+  String get deleteAccountWarning =>
+      'This action is permanent. Your profile, towing sessions, and associated telemetry will be deleted. Enter your password to confirm.';
+
+  @override
+  String get deleteAccountButton => 'Delete permanently';
+
+  @override
+  String get deleteAccountSuccess =>
+      'Your account and associated data have been deleted.';
+
+  @override
+  String get deleteAccountError =>
+      'Could not delete the account. Check your password and try again.';
+
+  @override
+  String get cancelButton => 'Cancel';
 
   @override
   String get closeButton => 'Close';

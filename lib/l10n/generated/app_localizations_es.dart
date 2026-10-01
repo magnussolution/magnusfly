@@ -198,7 +198,32 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get privacyPolicySummary =>
-      'MagnusFly usa su username, nombre, email, país, contraseña y telemetría de la sesión de remolque para ofrecer transmisión remota de variómetro entre un Piloto y un Conductor. La telemetría puede incluir VARIO, AGL, presión, altitud relativa, marcas de tiempo y estado de conexión. Los datos se envían al backend de MagnusFly por HTTPS y se usan solo para operar la app, autenticar usuarios y entregar los datos del piloto al conductor conectado a la sesión. MagnusFly no vende datos personales y no usa SDKs de publicidad. Para solicitar eliminación de cuenta o datos, contacte a MagnusSolution por el canal de soporte indicado en la página pública de política de privacidad.';
+      'MagnusFly usa su username, nombre, email, país, contraseña y telemetría de la sesión de remolque para ofrecer transmisión remota de variómetro entre un Piloto y un Conductor. La telemetría puede incluir VARIO, AGL, presión, altitud relativa, marcas de tiempo y estado de conexión. Los datos se envían al backend de MagnusFly por HTTPS y se usan solo para operar la app, autenticar usuarios y entregar los datos del piloto al conductor conectado a la sesión. MagnusFly no vende datos personales y no usa SDKs de publicidad. Puede eliminar su cuenta en la app o en https://magnussolution.com/magnusfly/account-deletion.html.';
+
+  @override
+  String get deleteAccountTitle => 'Eliminar cuenta';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'Eliminar permanentemente su perfil y los datos asociados';
+
+  @override
+  String get deleteAccountWarning =>
+      'Esta acción es permanente. Se eliminarán su perfil, las sesiones de remolque y la telemetría asociada. Ingrese su contraseña para confirmar.';
+
+  @override
+  String get deleteAccountButton => 'Eliminar permanentemente';
+
+  @override
+  String get deleteAccountSuccess =>
+      'Su cuenta y los datos asociados fueron eliminados.';
+
+  @override
+  String get deleteAccountError =>
+      'No se pudo eliminar la cuenta. Verifique su contraseña e inténtelo de nuevo.';
+
+  @override
+  String get cancelButton => 'Cancelar';
 
   @override
   String get closeButton => 'Cerrar';

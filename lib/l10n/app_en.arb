@@ -63,6 +63,13 @@
   "passwordLabel": "Password",
   "privacyPolicyTitle": "Privacy Policy",
   "privacyPolicyUrl": "https://magnussolution.com/magnusfly/privacy.html",
-  "privacyPolicySummary": "MagnusFly uses your username, name, email, country, password, and towing session telemetry to provide remote variometer transmission between a Pilot and a Driver. Telemetry may include VARIO, AGL, pressure, relative altitude, timestamps, and connection status. Data is sent to the MagnusFly backend over HTTPS and is used only to operate the app, authenticate users, and deliver pilot data to the driver connected to the session. MagnusFly does not sell personal data and does not use advertising SDKs. To request account or data deletion, contact MagnusSolution through the support channel listed on the public privacy policy page.",
+  "privacyPolicySummary": "MagnusFly uses your username, name, email, country, password, and towing session telemetry to provide remote variometer transmission between a Pilot and a Driver. Telemetry may include VARIO, AGL, pressure, relative altitude, timestamps, and connection status. Data is sent to the MagnusFly backend over HTTPS and is used only to operate the app, authenticate users, and deliver pilot data to the driver connected to the session. MagnusFly does not sell personal data and does not use advertising SDKs. Delete your account in the app or at https://magnussolution.com/magnusfly/account-deletion.html.",
+  "deleteAccountTitle": "Delete account",
+  "deleteAccountSubtitle": "Permanently delete your profile and associated data",
+  "deleteAccountWarning": "This action is permanent. Your profile, towing sessions, and associated telemetry will be deleted. Enter your password to confirm.",
+  "deleteAccountButton": "Delete permanently",
+  "deleteAccountSuccess": "Your account and associated data have been deleted.",
+  "deleteAccountError": "Could not delete the account. Check your password and try again.",
+  "cancelButton": "Cancel",
   "closeButton": "Close"
 }

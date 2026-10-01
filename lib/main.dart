@@ -93,6 +93,13 @@ class _MagnusFlyAppState extends State<MagnusFlyApp> {
                   selectedLocale: _locale,
                   onLocaleChanged: _setLocale,
                   onLogout: _logout,
+                  onDeleteAccount: (password) async {
+                    await MagnusFlyApiClient().deletePilot(
+                      profile: _profile!,
+                      password: password,
+                    );
+                    await _logout();
+                  },
                 ),
     );
   }
@@ -131,6 +138,7 @@ class HomeScreen extends StatelessWidget {
     required this.selectedLocale,
     required this.onLocaleChanged,
     required this.onLogout,
+    required this.onDeleteAccount,
     super.key,
   });
 
@@ -138,6 +146,7 @@ class HomeScreen extends StatelessWidget {
   final Locale? selectedLocale;
   final ValueChanged<Locale?> onLocaleChanged;
   final VoidCallback onLogout;
+  final Future<void> Function(String password) onDeleteAccount;
 
   @override
   Widget build(BuildContext context) {
@@ -167,6 +176,9 @@ class HomeScreen extends StatelessWidget {
                   builder: (context) => SettingsScreen(
                     selectedLocale: selectedLocale,
                     onLocaleChanged: onLocaleChanged,
+                    profile: profile,
+                    onDeleteAccount: onDeleteAccount,
+                    onLogout: onLogout,
                   ),
                 ),
               );
@@ -228,11 +240,17 @@ class SettingsScreen extends StatelessWidget {
   const SettingsScreen({
     required this.selectedLocale,
     required this.onLocaleChanged,
+    required this.profile,
+    required this.onDeleteAccount,
+    required this.onLogout,
     super.key,
   });
 
   final Locale? selectedLocale;
   final ValueChanged<Locale?> onLocaleChanged;
+  final PilotProfile profile;
+  final Future<void> Function(String password) onDeleteAccount;
+  final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -247,6 +265,13 @@ class SettingsScreen extends StatelessWidget {
           children: [
             ListTile(
               title: Text(l10n.languageTitle),
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.delete_forever_outlined, color: Colors.red),
+              title: Text(l10n.deleteAccountTitle),
+              subtitle: Text(l10n.deleteAccountSubtitle),
+              onTap: () => _confirmDelete(context, l10n),
             ),
             LanguageTile(
               title: l10n.english,
@@ -277,6 +302,63 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, AppLocalizations l10n) async {
+    final passwordController = TextEditingController();
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteAccountTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.deleteAccountWarning),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: InputDecoration(labelText: l10n.passwordLabel),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancelButton),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.deleteAccountButton),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true) {
+      passwordController.dispose();
+      return;
+    }
+    try {
+      await onDeleteAccount(passwordController.text);
+      if (context.mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.deleteAccountSuccess)),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.deleteAccountError)),
+        );
+      }
+    } finally {
+      passwordController.dispose();
+    }
   }
 }
 

@@ -197,7 +197,32 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get privacyPolicySummary =>
-      'O MagnusFly usa seu username, nome, email, país, senha e telemetria da sessão de reboque para oferecer transmissão remota de variômetro entre Piloto e Motorista. A telemetria pode incluir VARIO, AGL, pressão, altitude relativa, horários e estado da conexão. Os dados são enviados ao backend do MagnusFly por HTTPS e usados somente para operar o app, autenticar usuários e entregar os dados do piloto ao motorista conectado à sessão. O MagnusFly não vende dados pessoais e não usa SDKs de publicidade. Para solicitar exclusão de conta ou dados, entre em contato com a MagnusSolution pelo canal de suporte indicado na página pública da política de privacidade.';
+      'O MagnusFly usa seu username, nome, email, país, senha e telemetria da sessão de reboque para oferecer transmissão remota de variômetro entre Piloto e Motorista. A telemetria pode incluir VARIO, AGL, pressão, altitude relativa, horários e estado da conexão. Os dados são enviados ao backend do MagnusFly por HTTPS e usados somente para operar o app, autenticar usuários e entregar os dados do piloto ao motorista conectado à sessão. O MagnusFly não vende dados pessoais e não usa SDKs de publicidade. Você pode excluir a conta no app ou em https://magnussolution.com/magnusfly/account-deletion.html.';
+
+  @override
+  String get deleteAccountTitle => 'Excluir conta';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'Apagar permanentemente seu perfil e dados associados';
+
+  @override
+  String get deleteAccountWarning =>
+      'Esta ação é permanente. Seu perfil, sessões de reboque e telemetria associada serão excluídos. Informe sua senha para confirmar.';
+
+  @override
+  String get deleteAccountButton => 'Excluir permanentemente';
+
+  @override
+  String get deleteAccountSuccess =>
+      'Sua conta e os dados associados foram excluídos.';
+
+  @override
+  String get deleteAccountError =>
+      'Não foi possível excluir a conta. Verifique sua senha e tente novamente.';
+
+  @override
+  String get cancelButton => 'Cancelar';
 
   @override
   String get closeButton => 'Fechar';
