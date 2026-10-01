@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/magnusfly_api_client.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../pilot/pilot_profile_store.dart';
+import '../privacy/privacy_policy_dialog.dart';
 
 class AuthScreen extends StatefulWidget {
   AuthScreen({
@@ -228,6 +229,12 @@ class _AuthScreenState extends State<AuthScreen> {
                 label: Text(l10n.registerButton),
               ),
             ],
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () => showPrivacyPolicyDialog(context),
+              icon: const Icon(Icons.privacy_tip_outlined),
+              label: Text(l10n.privacyPolicyTitle),
+            ),
           ],
         ),
       ),

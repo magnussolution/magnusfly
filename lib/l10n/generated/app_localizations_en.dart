@@ -187,4 +187,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordLabel => 'Password';
+
+  @override
+  String get privacyPolicyTitle => 'Privacy Policy';
+
+  @override
+  String get privacyPolicyUrl =>
+      'https://magnussolution.com/magnusfly/privacy.html';
+
+  @override
+  String get privacyPolicySummary =>
+      'MagnusFly uses your username, name, email, country, password, and towing session telemetry to provide remote variometer transmission between a Pilot and a Driver. Telemetry may include VARIO, AGL, pressure, relative altitude, timestamps, and connection status. Data is sent to the MagnusFly backend over HTTPS and is used only to operate the app, authenticate users, and deliver pilot data to the driver connected to the session. MagnusFly does not sell personal data and does not use advertising SDKs. To request account or data deletion, contact MagnusSolution through the support channel listed on the public privacy policy page.';
+
+  @override
+  String get closeButton => 'Close';
 }

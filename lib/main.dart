@@ -7,6 +7,7 @@ import 'driver/driver_screen.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'pilot/pilot_screen.dart';
 import 'pilot/pilot_profile_store.dart';
+import 'privacy/privacy_policy_dialog.dart';
 
 void main() {
   runApp(const MagnusFlyApp());
@@ -264,6 +265,13 @@ class SettingsScreen extends StatelessWidget {
               locale: const Locale('es'),
               selectedLocale: selectedLocale,
               onLocaleChanged: onLocaleChanged,
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: Text(l10n.privacyPolicyTitle),
+              subtitle: Text(l10n.privacyPolicyUrl),
+              onTap: () => showPrivacyPolicyDialog(context),
             ),
           ],
         ),

@@ -57,5 +57,9 @@
   "registerButton": "Cadastrar",
   "loginButton": "Login",
   "logoutButton": "Logout",
-  "passwordLabel": "Senha"
+  "passwordLabel": "Senha",
+  "privacyPolicyTitle": "Política de privacidade",
+  "privacyPolicyUrl": "https://magnussolution.com/magnusfly/privacy.html",
+  "privacyPolicySummary": "O MagnusFly usa seu username, nome, email, país, senha e telemetria da sessão de reboque para oferecer transmissão remota de variômetro entre Piloto e Motorista. A telemetria pode incluir VARIO, AGL, pressão, altitude relativa, horários e estado da conexão. Os dados são enviados ao backend do MagnusFly por HTTPS e usados somente para operar o app, autenticar usuários e entregar os dados do piloto ao motorista conectado à sessão. O MagnusFly não vende dados pessoais e não usa SDKs de publicidade. Para solicitar exclusão de conta ou dados, entre em contato com a MagnusSolution pelo canal de suporte indicado na página pública da política de privacidade.",
+  "closeButton": "Fechar"
 }

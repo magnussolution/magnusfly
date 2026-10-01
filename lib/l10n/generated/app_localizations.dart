@@ -447,6 +447,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password'**
   String get passwordLabel;
+
+  /// No description provided for @privacyPolicyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicyTitle;
+
+  /// No description provided for @privacyPolicyUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'https://magnussolution.com/magnusfly/privacy.html'**
+  String get privacyPolicyUrl;
+
+  /// No description provided for @privacyPolicySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'MagnusFly uses your username, name, email, country, password, and towing session telemetry to provide remote variometer transmission between a Pilot and a Driver. Telemetry may include VARIO, AGL, pressure, relative altitude, timestamps, and connection status. Data is sent to the MagnusFly backend over HTTPS and is used only to operate the app, authenticate users, and deliver pilot data to the driver connected to the session. MagnusFly does not sell personal data and does not use advertising SDKs. To request account or data deletion, contact MagnusSolution through the support channel listed on the public privacy policy page.'**
+  String get privacyPolicySummary;
+
+  /// No description provided for @closeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeButton;
 }
 
 class _AppLocalizationsDelegate

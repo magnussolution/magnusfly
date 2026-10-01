@@ -188,4 +188,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get passwordLabel => 'Contraseña';
+
+  @override
+  String get privacyPolicyTitle => 'Política de privacidad';
+
+  @override
+  String get privacyPolicyUrl =>
+      'https://magnussolution.com/magnusfly/privacy.html';
+
+  @override
+  String get privacyPolicySummary =>
+      'MagnusFly usa su username, nombre, email, país, contraseña y telemetría de la sesión de remolque para ofrecer transmisión remota de variómetro entre un Piloto y un Conductor. La telemetría puede incluir VARIO, AGL, presión, altitud relativa, marcas de tiempo y estado de conexión. Los datos se envían al backend de MagnusFly por HTTPS y se usan solo para operar la app, autenticar usuarios y entregar los datos del piloto al conductor conectado a la sesión. MagnusFly no vende datos personales y no usa SDKs de publicidad. Para solicitar eliminación de cuenta o datos, contacte a MagnusSolution por el canal de soporte indicado en la página pública de política de privacidad.';
+
+  @override
+  String get closeButton => 'Cerrar';
 }
