@@ -12,16 +12,18 @@ magnusfly_run(function (): void {
     $pilotToken = magnusfly_token();
 
     $pdo = magnusfly_db();
+    $pdo->beginTransaction();
     $statement = $pdo->prepare(
         'SELECT id, code, status
          FROM tow_sessions
          WHERE pilot_username = ? AND status = ?
          ORDER BY id DESC
-         LIMIT 1'
+         LIMIT 1 FOR UPDATE'
     );
     $statement->execute([$pilotUsername, 'waiting']);
     $session = $statement->fetch();
     if (!$session) {
+        $pdo->rollBack();
         magnusfly_error(
             'session_not_found',
             'No waiting Driver session was found for this Pilot.',
@@ -33,6 +35,7 @@ magnusfly_run(function (): void {
         'UPDATE tow_sessions SET pilot_token = ?, status = ?, accepted_at = CURRENT_TIMESTAMP WHERE id = ?'
     );
     $update->execute([$pilotToken, 'active', $session['id']]);
+    $pdo->commit();
 
     magnusfly_response([
         'ok' => true,

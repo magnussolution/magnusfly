@@ -14,7 +14,7 @@ magnusfly_run(function (): void {
 
     $pdo = magnusfly_db();
     $statement = $pdo->prepare(
-        'SELECT id, code, status, UNIX_TIMESTAMP(last_seen_at) AS last_seen_unix
+        'SELECT id, code, status, pilot_token, pilot_stopped_at, UNIX_TIMESTAMP(last_seen_at) AS last_seen_unix
          FROM tow_sessions
          WHERE driver_token = ?
          LIMIT 1'
@@ -26,7 +26,7 @@ magnusfly_run(function (): void {
     }
 
     $telemetryStatement = $pdo->prepare(
-        'SELECT vario_mps, agl_m, pressure_hpa, relative_altitude_m, client_timestamp_ms,
+        'SELECT id, location_json, vario_mps, agl_m, pressure_hpa, relative_altitude_m, client_timestamp_ms,
                 UNIX_TIMESTAMP(received_at) AS received_unix
          FROM pilot_telemetry
          WHERE session_id = ?
@@ -42,11 +42,14 @@ magnusfly_run(function (): void {
             'id' => (int) $session['id'],
             'code' => $session['code'],
             'status' => $session['status'],
+            'pilotStopped' => $session['status'] === 'ended' && ($session['pilot_token'] === null || $session['pilot_stopped_at'] !== null),
             'lastSeenAgeMs' => $session['last_seen_unix'] === null
                 ? null
                 : max(0, (time() - (int) $session['last_seen_unix']) * 1000),
         ],
         'telemetry' => $telemetry ? [
+            'id' => (int) $telemetry['id'],
+            'location' => $telemetry['location_json'] === null ? null : json_decode($telemetry['location_json'], true),
             'varioMps' => (float) $telemetry['vario_mps'],
             'aglM' => (float) $telemetry['agl_m'],
             'pressureHpa' => $telemetry['pressure_hpa'] === null ? null : (float) $telemetry['pressure_hpa'],
