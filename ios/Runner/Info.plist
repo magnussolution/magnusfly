@@ -29,9 +29,9 @@
 	<key>NSMotionUsageDescription</key>
 	<string>MagnusFly uses barometer altitude changes to transmit pilot VARIO and AGL during towing.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>MagnusFly uses background location only to keep Pilot transmission active during towing while another flight app is open.</string>
+	<string>MagnusFly shares your position with the connected driver during a tow, including while another flight app is open, to estimate tow angle and line length.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>MagnusFly uses location only to support Pilot transmission during towing.</string>
+	<string>MagnusFly uses pilot and driver positions to estimate tow angle and line length during a tow.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

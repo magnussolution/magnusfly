@@ -100,6 +100,168 @@ abstract class AppLocalizations {
     Locale('pt')
   ];
 
+  /// No description provided for @towAngle.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated angle'**
+  String get towAngle;
+
+  /// No description provided for @towRope.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated line'**
+  String get towRope;
+
+  /// No description provided for @towDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal distance'**
+  String get towDistance;
+
+  /// No description provided for @towFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish tow'**
+  String get towFinish;
+
+  /// No description provided for @towFinishing.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish pending pilot confirmation'**
+  String get towFinishing;
+
+  /// No description provided for @towEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Tow finished'**
+  String get towEnded;
+
+  /// No description provided for @towLost.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot data lost'**
+  String get towLost;
+
+  /// No description provided for @towGps.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS unavailable or inaccurate'**
+  String get towGps;
+
+  /// No description provided for @towMute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute connection alarm'**
+  String get towMute;
+
+  /// No description provided for @towHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Tow history'**
+  String get towHistory;
+
+  /// No description provided for @towEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tows recorded'**
+  String get towEmpty;
+
+  /// No description provided for @towDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get towDuration;
+
+  /// No description provided for @towMaximum.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum altitude'**
+  String get towMaximum;
+
+  /// No description provided for @towGaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection losses'**
+  String get towGaps;
+
+  /// No description provided for @towLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location during towing'**
+  String get towLocationTitle;
+
+  /// No description provided for @towLocationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'MagnusFly uses your location during the tow to estimate angle and line length. The pilot shares their position with the connected driver, including while another app is open. Tow measurements are recorded until the driver finishes.'**
+  String get towLocationBody;
+
+  /// No description provided for @towContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get towContinue;
+
+  /// No description provided for @towRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry GPS'**
+  String get towRetry;
+
+  /// No description provided for @towActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Tow in progress'**
+  String get towActive;
+
+  /// No description provided for @towHistoryError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save tow history'**
+  String get towHistoryError;
+
+  /// No description provided for @towConfirmFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish this tow and stop pilot transmission?'**
+  String get towConfirmFinish;
+
+  /// No description provided for @towConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get towConfirm;
+
+  /// No description provided for @towSamples.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded measurements'**
+  String get towSamples;
+
+  /// No description provided for @towStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get towStart;
+
+  /// No description provided for @towLosses.
+  ///
+  /// In en, this message translates to:
+  /// **'Communication'**
+  String get towLosses;
+
+  /// No description provided for @towNoGps.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without GPS'**
+  String get towNoGps;
+
+  /// No description provided for @towRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection restored'**
+  String get towRecovered;
+
   /// Application name.
   ///
   /// In en, this message translates to:

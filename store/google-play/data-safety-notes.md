@@ -24,7 +24,9 @@ Device or other IDs:
 
 Location:
 
-- Do not declare precise or approximate location for the current Android app unless GPS/location collection is added later. Current telemetry is barometer-derived VARIO/AGL/pressure and does not include latitude/longitude.
+- Version 0.2.0 collects precise pilot location (latitude, longitude, accuracy and age) during an accepted tow, including through a user-started foreground location service while another app is open. Declare location collection for app functionality; it is optional (denial leaves VARIO/AGL available), encrypted in transit and retained with server telemetry until account/session deletion. Approximate-only fixes may be received when users decline precise access and are not used for geometry if inaccurate.
+- The connected driver receives pilot position for the explicitly accepted tow. Review the user-initiated sharing category in the Console. The driver's own location is processed locally, not uploaded.
+- Local driver history stores derived measurements, timestamps, pilot username and communication gaps. It does not store raw driver GPS coordinates.
 
 Health, financial, contacts, messages, photos/videos/audio/files/calendar:
 
@@ -50,8 +52,8 @@ Health, financial, contacts, messages, photos/videos/audio/files/calendar:
 
 ## Foreground service declaration
 
-The Android app declares `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_DATA_SYNC`.
+The Android app declares `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC` and `FOREGROUND_SERVICE_LOCATION`. Update the Play Console location/foreground-service declarations and demonstration before distributing 0.2.0.
 
 Suggested Play Console explanation:
 
-MagnusFly uses a data sync foreground service while the Pilot is actively transmitting towing telemetry. The service keeps pilot VARIO/AGL sensor data flowing to the connected Driver during a towing session, including when the Pilot switches to another flight app. The service is user initiated from the Pilot transmission screen and can be stopped by the user from the app/notification.
+MagnusFly uses user-started foreground services while the Pilot transmits tow telemetry and location. The pilot accepts a driver invitation; VARIO, AGL and location are then sent during the tow, including when another flight app is open. The driver manually finishes; the pilot stops sensors, location and services before acknowledging. Network loss alone never ends the session. Do not claim that the notification has a stop action: it does not.

@@ -11,7 +11,8 @@ Future<void> showPrivacyPolicyDialog(BuildContext context) {
       return AlertDialog(
         title: Text(l10n.privacyPolicyTitle),
         content: SingleChildScrollView(
-          child: Text(l10n.privacyPolicySummary),
+          child: Text(
+              '${l10n.privacyPolicySummary}\n\n${l10n.towLocationBody}\n\n${l10n.privacyPolicyUrl}'),
         ),
         actions: [
           TextButton(

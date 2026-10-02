@@ -1,7 +1,7 @@
 name: magnusfly
 description: Simple remote variometer app for paraglider towing.
 publish_to: 'none'
-version: 0.1.2+3
+version: 0.2.0+4
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -11,8 +11,10 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  geolocator: ^14.1.1
   http: ^1.6.0
   intl: ^0.20.3
+  path_provider: ^2.1.6
   sensors_plus: ^7.1.0
   shared_preferences: ^2.5.5
 

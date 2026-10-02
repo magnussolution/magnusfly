@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../flight/tow_geometry.dart';
 
 class MagnusFlyApiException implements Exception {
   const MagnusFlyApiException(this.message);
@@ -58,11 +59,13 @@ class DriverTelemetrySnapshot {
     required this.status,
     required this.lastSeenAgeMs,
     required this.telemetry,
+    this.pilotStopped = false,
   });
 
   final String status;
   final int? lastSeenAgeMs;
   final PilotTelemetry? telemetry;
+  final bool pilotStopped;
 }
 
 class PilotTelemetry {
@@ -73,6 +76,8 @@ class PilotTelemetry {
     required this.relativeAltitudeM,
     required this.timestampMillis,
     required this.receivedAgeMs,
+    this.id,
+    this.location,
   });
 
   final double varioMps;
@@ -81,6 +86,19 @@ class PilotTelemetry {
   final double? relativeAltitudeM;
   final int? timestampMillis;
   final int receivedAgeMs;
+  final int? id;
+  final Map<String, dynamic>? location;
+
+  TowPosition? positionAt(DateTime now, int totalAgeMs) {
+    final fix = location;
+    if (fix == null) return null;
+    return TowPosition(
+        (fix['latitude'] as num).toDouble(),
+        (fix['longitude'] as num).toDouble(),
+        (fix['accuracy'] as num).toDouble(),
+        now.subtract(Duration(
+            milliseconds: totalAgeMs + (fix['ageMs'] as num).toInt())));
+  }
 }
 
 class MagnusFlyApiClient {
@@ -176,39 +194,60 @@ class MagnusFlyApiClient {
     );
   }
 
-  Future<void> sendPilotTelemetry({
+  Future<String> sendPilotTelemetry({
     required String pilotToken,
     required double varioMps,
     required double aglM,
     required double pressureHpa,
     required double relativeAltitudeM,
     required int timestampMillis,
+    TowPosition? location,
   }) async {
-    await _post(_resolve('telemetry/pilot.php'), {
+    final result = await _post(_resolve('telemetry/pilot.php'), {
       'pilotToken': pilotToken,
       'varioMps': varioMps,
       'aglM': aglM,
       'pressureHpa': pressureHpa,
       'relativeAltitudeM': relativeAltitudeM,
       'timestampMillis': timestampMillis,
+      'location': location != null && location.usable(DateTime.now())
+          ? location.toJson(DateTime.now())
+          : null,
     });
+    return result['status'] as String? ?? 'active';
+  }
+
+  Future<bool> finishSession(String driverToken) async {
+    final result = await _post(
+        _resolve('sessions/finish.php'), {'driverToken': driverToken});
+    return result['pilotStopped'] == true;
+  }
+
+  Future<String> pilotStatus(String pilotToken, {bool stopped = false}) async {
+    final result = await _post(_resolve('sessions/pilot-status.php'),
+        {'pilotToken': pilotToken, 'stopped': stopped});
+    return result['status'] as String;
   }
 
   Future<DriverTelemetrySnapshot> latestTelemetry(String driverToken) async {
     final uri = _resolve('telemetry/latest.php').replace(
       queryParameters: {'driverToken': driverToken},
     );
-    final response = await _httpClient.get(uri);
+    final response =
+        await _httpClient.get(uri).timeout(const Duration(seconds: 5));
     final json = _decodeResponse(response);
     final session = json['session'] as Map<String, dynamic>;
     final telemetry = json['telemetry'] as Map<String, dynamic>?;
 
     return DriverTelemetrySnapshot(
       status: session['status'] as String,
+      pilotStopped: session['pilotStopped'] == true,
       lastSeenAgeMs: session['lastSeenAgeMs'] as int?,
       telemetry: telemetry == null
           ? null
           : PilotTelemetry(
+              id: telemetry['id'] as int?,
+              location: telemetry['location'] as Map<String, dynamic>?,
               varioMps: (telemetry['varioMps'] as num).toDouble(),
               aglM: (telemetry['aglM'] as num).toDouble(),
               pressureHpa: (telemetry['pressureHpa'] as num?)?.toDouble(),
@@ -221,11 +260,13 @@ class MagnusFlyApiClient {
   }
 
   Future<Map<String, dynamic>> _post(Uri uri, Map<String, Object?> body) async {
-    final response = await _httpClient.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
-    );
+    final response = await _httpClient
+        .post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 5));
 
     return _decodeResponse(response);
   }

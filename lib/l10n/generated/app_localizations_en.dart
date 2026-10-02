@@ -9,6 +9,88 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get towAngle => 'Estimated angle';
+
+  @override
+  String get towRope => 'Estimated line';
+
+  @override
+  String get towDistance => 'Horizontal distance';
+
+  @override
+  String get towFinish => 'Finish tow';
+
+  @override
+  String get towFinishing => 'Finish pending pilot confirmation';
+
+  @override
+  String get towEnded => 'Tow finished';
+
+  @override
+  String get towLost => 'Pilot data lost';
+
+  @override
+  String get towGps => 'GPS unavailable or inaccurate';
+
+  @override
+  String get towMute => 'Mute connection alarm';
+
+  @override
+  String get towHistory => 'Tow history';
+
+  @override
+  String get towEmpty => 'No tows recorded';
+
+  @override
+  String get towDuration => 'Duration';
+
+  @override
+  String get towMaximum => 'Maximum altitude';
+
+  @override
+  String get towGaps => 'Connection losses';
+
+  @override
+  String get towLocationTitle => 'Location during towing';
+
+  @override
+  String get towLocationBody =>
+      'MagnusFly uses your location during the tow to estimate angle and line length. The pilot shares their position with the connected driver, including while another app is open. Tow measurements are recorded until the driver finishes.';
+
+  @override
+  String get towContinue => 'Continue';
+
+  @override
+  String get towRetry => 'Retry GPS';
+
+  @override
+  String get towActive => 'Tow in progress';
+
+  @override
+  String get towHistoryError => 'Could not save tow history';
+
+  @override
+  String get towConfirmFinish => 'Finish this tow and stop pilot transmission?';
+
+  @override
+  String get towConfirm => 'Finish';
+
+  @override
+  String get towSamples => 'Recorded measurements';
+
+  @override
+  String get towStart => 'Start';
+
+  @override
+  String get towLosses => 'Communication';
+
+  @override
+  String get towNoGps => 'Continue without GPS';
+
+  @override
+  String get towRecovered => 'Connection restored';
+
+  @override
   String get appTitle => 'MagnusFly';
 
   @override

@@ -1,374 +1,290 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-
 import '../api/magnusfly_api_client.dart';
 import '../flight/altitude_engine.dart';
 import '../flight/variometer_engine.dart';
+import '../flight/tow_location.dart';
+import '../flight/tow_permissions.dart';
+import '../flight/tow_store.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'pilot_background_engine.dart';
 
 class PilotScreen extends StatefulWidget {
-  PilotScreen({
-    required this.profile,
-    MagnusFlyApiClient? apiClient,
-    PilotBackgroundEngine? pilotBackgroundEngine,
-    super.key,
-  })  : apiClient = apiClient ?? MagnusFlyApiClient(),
+  PilotScreen(
+      {required this.profile,
+      MagnusFlyApiClient? apiClient,
+      PilotBackgroundEngine? pilotBackgroundEngine,
+      super.key})
+      : apiClient = apiClient ?? MagnusFlyApiClient(),
         pilotBackgroundEngine =
             pilotBackgroundEngine ?? PilotBackgroundEngine();
-
   final PilotProfile profile;
   final MagnusFlyApiClient apiClient;
   final PilotBackgroundEngine pilotBackgroundEngine;
-
   @override
   State<PilotScreen> createState() => _PilotScreenState();
 }
 
 class _PilotScreenState extends State<PilotScreen> {
-  final AglEngine _aglEngine = AglEngine();
-  final VariometerEngine _variometerEngine =
-      VariometerEngine(smoothingFactor: 0.35);
-  StreamSubscription<PilotBarometerSample>? _subscription;
-  PilotBarometerSample? _lastBarometerSample;
-  AltitudeSample? _lastAltitudeSample;
-  VarioSample? _lastVarioSample;
-  String? _pilotToken;
-  Object? _error;
-  bool _isStarting = false;
-  bool _isAccepting = false;
-  bool _isRunning = false;
+  final _agl = AglEngine();
+  final _vario = VariometerEngine(smoothingFactor: 0.35);
+  final _location = TowLocation();
+  late final TowStore _store = TowStore(widget.profile.username);
+  Map<String, dynamic>? _session;
+  StreamSubscription<PilotBarometerSample>? _samples;
+  Timer? _control;
+  AltitudeSample? _altitude;
+  VarioSample? _vertical;
+  PilotBarometerSample? _latest;
+  bool _running = false, _busy = true, _requesting = false, _sending = false;
+  bool _stopping = false, _ended = false;
+  String? _error;
+  int _lastSent = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restore());
+  }
+
+  Future<void> _restore() async {
+    try {
+      _session = await _store.session('pilot');
+      if (_session != null) {
+        _control = Timer.periodic(
+            const Duration(seconds: 1), (_) => unawaited(_check()));
+        await _check();
+        if (_session != null && _session!['stopped'] != true && mounted) {
+          final allowed = await prepareTowLocation(context, _location);
+          if (mounted) await _start(allowed);
+        }
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
+  Future<void> _accept() async {
+    final l = AppLocalizations.of(context);
+    setState(() {
+      _busy = true;
+      _error = null;
+      _ended = false;
+    });
+    try {
+      final allowed = await prepareTowLocation(context, _location);
+      if (!mounted) return;
+      if (!await widget.pilotBackgroundEngine.isAvailable()) {
+        throw StateError(l.pilotBarometerUnavailable);
+      }
+      final accepted = await widget.apiClient
+          .acceptSession(pilotUsername: widget.profile.username);
+      _session = {'token': accepted.pilotToken};
+      await _store.saveSession('pilot', _session);
+      _control?.cancel();
+      _control = Timer.periodic(
+          const Duration(seconds: 1), (_) => unawaited(_check()));
+      if (mounted) await _start(allowed);
+    } catch (e) {
+      _error = e.toString();
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
+  Future<void> _start(bool gps) async {
+    _latest = null;
+    _altitude = null;
+    _vertical = null;
+    _lastSent = 0;
+    _agl.resetCalibration();
+    _vario.reset();
+    final ground = _session?['groundPressure'] as num?;
+    if (ground != null) _agl.calibrateGroundFromPressure(ground.toDouble());
+    _running = true;
+    if (gps) {
+      _location.start(
+          pilot: true,
+          notification: AppLocalizations.of(context).pilotTransmissionActive);
+    }
+    _samples = widget.pilotBackgroundEngine.barometerSamples().listen(_sample,
+        onError: (Object e) {
+      if (mounted) setState(() => _error = e.toString());
+    });
+    try {
+      await widget.pilotBackgroundEngine.start();
+    } catch (_) {
+      _running = false;
+      await _samples?.cancel();
+      await _location.stop();
+      rethrow;
+    }
+    if (mounted) setState(() {});
+  }
+
+  void _sample(PilotBarometerSample sample) {
+    if (!_running || _stopping) return;
+    if (_latest != null && !sample.timestamp.isAfter(_latest!.timestamp)) {
+      return;
+    }
+    _latest = sample;
+    if (!_agl.isCalibrated) {
+      _agl.calibrateGroundFromPressure(sample.pressureHpa);
+      _session!['groundPressure'] = sample.pressureHpa;
+      unawaited(_store.saveSession('pilot', _session).catchError((Object e) {
+        if (mounted) setState(() => _error = e.toString());
+      }));
+    }
+    _altitude = _agl.sampleFromPressure(sample.pressureHpa);
+    _vertical = _vario.sample(
+        altitudeMeters: _altitude!.altitudeMeters, timestamp: sample.timestamp);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (!_sending && now - _lastSent >= 800) {
+      _lastSent = now;
+      unawaited(_send(sample));
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _send(PilotBarometerSample sample) async {
+    final token = _session?['token'] as String?;
+    if (token == null) return;
+    _sending = true;
+    try {
+      final status = await widget.apiClient.sendPilotTelemetry(
+          pilotToken: token,
+          varioMps: _vertical?.verticalSpeedMetersPerSecond ?? 0,
+          aglM: _altitude!.aglMeters!,
+          pressureHpa: sample.pressureHpa,
+          relativeAltitudeM: sample.relativeAltitudeMeters,
+          timestampMillis: sample.timestamp.millisecondsSinceEpoch,
+          location: _location.latest);
+      if (status == 'ended') {
+        await _shutdown();
+      } else {
+        _error = null;
+      }
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _sending = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<void> _check() async {
+    if (_requesting || _session == null || _stopping) return;
+    _requesting = true;
+    try {
+      final status = await widget.apiClient.pilotStatus(
+          _session!['token'] as String,
+          stopped: _session!['stopped'] == true);
+      if (status == 'ended') {
+        if (_session!['stopped'] == true) {
+          await _store.saveSession('pilot', null);
+          _session = null;
+          _control?.cancel();
+          _ended = true;
+        } else {
+          await _shutdown();
+        }
+      }
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _requesting = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<void> _shutdown() async {
+    if (_stopping || _session == null) return;
+    _stopping = true;
+    _running = false;
+    try {
+      await widget.pilotBackgroundEngine.stop();
+      await _location.stop();
+      await _samples?.cancel();
+      _samples = null;
+      _session!['stopped'] = true;
+      await _store.saveSession('pilot', _session);
+      _ended = true;
+      // Confirmation is retried by the control timer only after sensors stop.
+    } finally {
+      _stopping = false;
+    }
+  }
 
   @override
   void dispose() {
-    unawaited(_subscription?.cancel());
+    _control?.cancel();
+    unawaited(_samples?.cancel());
+    unawaited(_location.stop());
     unawaited(widget.pilotBackgroundEngine.stop());
     super.dispose();
   }
 
-  Future<void> _acceptSessionAndStart() async {
-    setState(() {
-      _isAccepting = true;
-      _error = null;
-    });
-
-    try {
-      final acceptedSession = await widget.apiClient.acceptSession(
-        pilotUsername: widget.profile.username,
-      );
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _pilotToken = acceptedSession.pilotToken;
-        _isAccepting = false;
-      });
-      await _startPilotTransmission();
-    } on Object catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isAccepting = false;
-        _error = error;
-      });
-    }
-  }
-
-  Future<void> _startPilotTransmission() async {
-    try {
-      setState(() {
-        _isStarting = true;
-      });
-      final isAvailable = await widget.pilotBackgroundEngine.isAvailable();
-      if (!isAvailable) {
-        setState(() {
-          _isStarting = false;
-          _error = AppLocalizations.of(context).pilotBarometerUnavailable;
-        });
-        return;
-      }
-
-      _subscription = widget.pilotBackgroundEngine.barometerSamples().listen(
-        _handleBarometerSample,
-        onError: (Object error) {
-          setState(() {
-            _error = error;
-          });
-        },
-      );
-      await widget.pilotBackgroundEngine.start();
-
-      setState(() {
-        _isStarting = false;
-        _isRunning = true;
-      });
-    } on Object catch (error) {
-      setState(() {
-        _isStarting = false;
-        _isRunning = false;
-        _error = error;
-      });
-    }
-  }
-
-  void _handleBarometerSample(PilotBarometerSample sample) {
-    final altitudeSample = _aglEngine.isCalibrated
-        ? _aglEngine.sampleFromPressure(sample.pressureHpa)
-        : _aglEngine.calibrateGroundFromPressure(sample.pressureHpa);
-    final varioSample = _variometerEngine.sample(
-      altitudeMeters: altitudeSample.altitudeMeters,
-      timestamp: sample.timestamp,
-    );
-    final verticalSpeed = varioSample.verticalSpeedMetersPerSecond;
-    final aglMeters = altitudeSample.aglMeters;
-    final pilotToken = _pilotToken;
-
-    if (pilotToken != null && verticalSpeed != null && aglMeters != null) {
-      unawaited(
-        widget.apiClient.sendPilotTelemetry(
-          pilotToken: pilotToken,
-          varioMps: verticalSpeed,
-          aglM: aglMeters,
-          pressureHpa: sample.pressureHpa,
-          relativeAltitudeM: sample.relativeAltitudeMeters,
-          timestampMillis: sample.timestamp.millisecondsSinceEpoch,
-        ),
-      );
-    }
-
-    setState(() {
-      _lastBarometerSample = sample;
-      _lastAltitudeSample = altitudeSample;
-      _lastVarioSample = varioSample;
-      _error = null;
-    });
-  }
-
-  Future<void> _stopPilotTransmission() async {
-    await _subscription?.cancel();
-    _subscription = null;
-    await widget.pilotBackgroundEngine.stop();
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _isRunning = false;
-      _pilotToken = null;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.pilotScreenTitle),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            _StatusBanner(
-              isStarting: _isStarting,
-              isRunning: _isRunning,
-              error: _error,
-            ),
-            const SizedBox(height: 24),
-            if (!_isRunning) ...[
-              Text('@${widget.profile.username}'),
-              const SizedBox(height: 12),
+    final l = AppLocalizations.of(context);
+    return PopScope(
+        canPop: _session == null && !_busy,
+        child: Scaffold(
+          appBar: AppBar(title: Text(l.pilotScreenTitle)),
+          body: SafeArea(
+              child: ListView(padding: const EdgeInsets.all(24), children: [
+            Text('@${widget.profile.username}'),
+            const SizedBox(height: 16),
+            Text(
+                _ended
+                    ? l.towEnded
+                    : _running
+                        ? l.pilotTransmissionActive
+                        : l.pilotTransmissionStopped,
+                style: Theme.of(context).textTheme.titleLarge),
+            if (_error != null)
+              Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text('${l.pilotTransmissionError}: $_error')),
+            if (_busy) const LinearProgressIndicator(),
+            if (_session == null && !_busy)
               FilledButton.icon(
-                onPressed: _isAccepting ? null : _acceptSessionAndStart,
-                icon: const Icon(Icons.link_outlined),
-                label: Text(
-                  _isAccepting
-                      ? l10n.pilotAcceptingSession
-                      : l10n.pilotAcceptSession,
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-            _MetricGrid(
-              varioMetersPerSecond:
-                  _lastVarioSample?.verticalSpeedMetersPerSecond,
-              aglMeters: _lastAltitudeSample?.aglMeters,
-              pressureHpa: _lastBarometerSample?.pressureHpa,
-              relativeAltitudeMeters:
-                  _lastBarometerSample?.relativeAltitudeMeters,
-            ),
+                  onPressed: _accept,
+                  icon: const Icon(Icons.link),
+                  label: Text(l.pilotAcceptSession)),
+            if (_session != null && !_running && !_ended && !_busy)
+              FilledButton.icon(
+                  onPressed: () async {
+                    setState(() => _busy = true);
+                    try {
+                      await _check();
+                      if (_session != null &&
+                          _session!['stopped'] != true &&
+                          context.mounted) {
+                        final allowed =
+                            await prepareTowLocation(context, _location);
+                        if (mounted) await _start(allowed);
+                      }
+                    } catch (e) {
+                      _error = e.toString();
+                    }
+                    if (mounted) setState(() => _busy = false);
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: Text(l.towContinue)),
             const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _isRunning ? _stopPilotTransmission : null,
-              icon: const Icon(Icons.stop_circle_outlined),
-              label: Text(l10n.stopPilotTransmission),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusBanner extends StatelessWidget {
-  const _StatusBanner({
-    required this.isStarting,
-    required this.isRunning,
-    required this.error,
-  });
-
-  final bool isStarting;
-  final bool isRunning;
-  final Object? error;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-    final (icon, text, color) = switch ((isStarting, isRunning, error)) {
-      (_, _, final Object error) => (
-          Icons.error_outline,
-          '${l10n.pilotTransmissionError}: $error',
-          colorScheme.error,
-        ),
-      (true, _, _) => (
-          Icons.sync_outlined,
-          l10n.pilotTransmissionStarting,
-          colorScheme.primary,
-        ),
-      (_, true, _) => (
-          Icons.sensors_outlined,
-          l10n.pilotTransmissionActive,
-          colorScheme.primary,
-        ),
-      _ => (
-          Icons.pause_circle_outline,
-          l10n.pilotTransmissionStopped,
-          colorScheme.secondary,
-        ),
-    };
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(width: 12),
-            Expanded(child: Text(text)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MetricGrid extends StatelessWidget {
-  const _MetricGrid({
-    required this.varioMetersPerSecond,
-    required this.aglMeters,
-    required this.pressureHpa,
-    required this.relativeAltitudeMeters,
-  });
-
-  final double? varioMetersPerSecond;
-  final double? aglMeters;
-  final double? pressureHpa;
-  final double? relativeAltitudeMeters;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.25,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      children: [
-        _MetricTile(
-          label: l10n.varioLabel,
-          value: _formatSigned(varioMetersPerSecond),
-          unit: l10n.metersPerSecondUnit,
-        ),
-        _MetricTile(
-          label: l10n.aglLabel,
-          value: _formatNumber(aglMeters),
-          unit: l10n.metersUnit,
-        ),
-        _MetricTile(
-          label: l10n.pressureLabel,
-          value: _formatNumber(pressureHpa),
-          unit: l10n.hectopascalUnit,
-        ),
-        _MetricTile(
-          label: l10n.relativeAltitudeLabel,
-          value: _formatSigned(relativeAltitudeMeters),
-          unit: l10n.metersUnit,
-        ),
-      ],
-    );
-  }
-
-  String _formatNumber(double? value) {
-    return value == null ? '--' : value.toStringAsFixed(1);
-  }
-
-  String _formatSigned(double? value) {
-    if (value == null) {
-      return '--';
-    }
-
-    final prefix = value > 0 ? '+' : '';
-    return '$prefix${value.toStringAsFixed(1)}';
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.label,
-    required this.value,
-    required this.unit,
-  });
-
-  final String label;
-  final String value;
-  final String unit;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(label, style: textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Text(value, style: textTheme.headlineMedium),
-            Text(unit, style: textTheme.bodySmall),
-          ],
-        ),
-      ),
-    );
+            ListTile(
+                title: Text(l.aglLabel),
+                trailing: Text(
+                    '${_altitude?.aglMeters?.toStringAsFixed(0) ?? '--'} m')),
+            ListTile(
+                title: Text(l.varioLabel),
+                trailing: Text(
+                    '${_vertical?.verticalSpeedMetersPerSecond?.toStringAsFixed(1) ?? '--'} m/s')),
+            if (_running &&
+                !(_location.latest?.usable(DateTime.now()) ?? false))
+              Text(l.towGps),
+          ])),
+        ));
   }
 }

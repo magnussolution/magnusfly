@@ -169,7 +169,6 @@ import UIKit
     }
 
     beginPilotBackgroundTask()
-    startLocationKeepAlive()
     pilotEngineRunning = true
 
     altimeter.startRelativeAltitudeUpdates(to: OperationQueue.main) { [weak self] data, error in
@@ -254,7 +253,7 @@ import UIKit
     }
 
     pilotBackgroundTask = UIApplication.shared.beginBackgroundTask(withName: "MagnusFlyPilot") { [weak self] in
-      self?.stopPilotEngine()
+      self?.endPilotBackgroundTask()
     }
   }
 

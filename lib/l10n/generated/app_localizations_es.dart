@@ -9,6 +9,90 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get towAngle => 'Ángulo estimado';
+
+  @override
+  String get towRope => 'Cuerda estimada';
+
+  @override
+  String get towDistance => 'Distancia horizontal';
+
+  @override
+  String get towFinish => 'Finalizar remolque';
+
+  @override
+  String get towFinishing =>
+      'Finalización pendiente de confirmación del piloto';
+
+  @override
+  String get towEnded => 'Remolque finalizado';
+
+  @override
+  String get towLost => 'Sin datos del piloto';
+
+  @override
+  String get towGps => 'GPS no disponible o impreciso';
+
+  @override
+  String get towMute => 'Silenciar alarma de conexión';
+
+  @override
+  String get towHistory => 'Historial de remolques';
+
+  @override
+  String get towEmpty => 'Ningún remolque registrado';
+
+  @override
+  String get towDuration => 'Duración';
+
+  @override
+  String get towMaximum => 'Altura máxima';
+
+  @override
+  String get towGaps => 'Pérdidas de conexión';
+
+  @override
+  String get towLocationTitle => 'Ubicación durante el remolque';
+
+  @override
+  String get towLocationBody =>
+      'MagnusFly usa tu ubicación durante el remolque para estimar ángulo y cuerda. El piloto comparte su posición con el conductor conectado, incluso mientras otra app está abierta. Las mediciones se registran hasta que el conductor finalice.';
+
+  @override
+  String get towContinue => 'Continuar';
+
+  @override
+  String get towRetry => 'Reintentar GPS';
+
+  @override
+  String get towActive => 'Remolque en curso';
+
+  @override
+  String get towHistoryError => 'No se pudo guardar el historial';
+
+  @override
+  String get towConfirmFinish =>
+      '¿Finalizar este remolque y detener la transmisión del piloto?';
+
+  @override
+  String get towConfirm => 'Finalizar';
+
+  @override
+  String get towSamples => 'Mediciones registradas';
+
+  @override
+  String get towStart => 'Inicio';
+
+  @override
+  String get towLosses => 'Comunicación';
+
+  @override
+  String get towNoGps => 'Continuar sin GPS';
+
+  @override
+  String get towRecovered => 'Conexión restablecida';
+
+  @override
   String get appTitle => 'MagnusFly';
 
   @override
