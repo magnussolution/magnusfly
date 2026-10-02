@@ -1,384 +1,480 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-
 import '../api/magnusfly_api_client.dart';
+import '../flight/tow_geometry.dart';
+import '../flight/tow_location.dart';
+import '../flight/tow_permissions.dart';
+import '../flight/tow_store.dart';
+import '../flight/telemetry_age.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'driver_vario_audio.dart';
+import 'tow_history_screen.dart';
 
 class DriverScreen extends StatefulWidget {
-  DriverScreen({
-    MagnusFlyApiClient? apiClient,
-    DriverVarioAudio? varioAudio,
-    super.key,
-  })  : apiClient = apiClient ?? MagnusFlyApiClient(),
+  DriverScreen(
+      {this.username = 'local',
+      this.store,
+      this.location,
+      MagnusFlyApiClient? apiClient,
+      DriverVarioAudio? varioAudio,
+      super.key})
+      : apiClient = apiClient ?? MagnusFlyApiClient(),
         varioAudio = varioAudio ?? DriverVarioAudio();
-
+  final String username;
+  final TowStore? store;
+  final TowLocation? location;
   final MagnusFlyApiClient apiClient;
   final DriverVarioAudio varioAudio;
-
   @override
   State<DriverScreen> createState() => _DriverScreenState();
 }
 
 class _DriverScreenState extends State<DriverScreen> {
-  final TextEditingController _pilotUsernameController =
-      TextEditingController();
-  CreatedSession? _session;
+  final _username = TextEditingController();
+  late final _location = widget.location ?? TowLocation();
+  final _smoother = AngleSmoother();
+  late final _store = widget.store ?? TowStore(widget.username);
+  final _receivedClock = Stopwatch();
+  final _activeClock = Stopwatch();
+  Map<String, dynamic>? _session;
   DriverTelemetrySnapshot? _snapshot;
-  Timer? _pollTimer;
-  Object? _error;
-  bool _isStarting = false;
-  bool _audioEnabled = true;
+  TowGeometry? _geometry;
+  Timer? _pollTimer, _tickTimer;
+  bool _busy = true, _pollBusy = false, _finishing = false, _ended = false;
+  bool _muted = false, _lost = false, _audio = true, _historyError = false;
+  String? _error;
+  int _requestMs = 0, _lastRecord = 0;
+  int? _lastAudioId, _lastGeometryId;
+  bool _recording = false;
+
+  int? get _age => _snapshot?.telemetry == null
+      ? null
+      : telemetryAgeMs(
+          receivedAgeMs: _snapshot!.telemetry!.receivedAgeMs,
+          elapsedMs: _receivedClock.elapsedMilliseconds,
+          requestMs: _requestMs,
+          capturedAtMs: _snapshot!.telemetry!.timestampMillis,
+          nowMs: DateTime.now().millisecondsSinceEpoch);
+  bool get _fresh =>
+      _session != null &&
+      !_ended &&
+      !_finishing &&
+      _age != null &&
+      _age! <= 3000;
+  String get _code => _session!['code'] as String;
 
   @override
   void initState() {
     super.initState();
+    unawaited(_restore());
+  }
+
+  Future<void> _restore() async {
+    try {
+      _session = await _store.session('driver');
+      if (_session != null) {
+        _finishing = _session!['finishing'] == true;
+        if (!_finishing && mounted) {
+          final gps = await prepareTowLocation(context, _location);
+          if (gps && mounted) {
+            _location.start(pilot: false, notification: 'MagnusFly');
+          }
+        }
+        _startTimers();
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
+  void _startTimers() {
+    _pollTimer?.cancel();
+    _tickTimer?.cancel();
+    _pollTimer = Timer.periodic(
+        const Duration(milliseconds: 800), (_) => unawaited(_poll()));
+    _tickTimer =
+        Timer.periodic(const Duration(milliseconds: 250), (_) => _tick());
+    unawaited(_poll());
+  }
+
+  Future<void> _create() async {
+    if (_username.text.trim().isEmpty) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final gps = await prepareTowLocation(context, _location);
+      final result = await widget.apiClient.createSession(
+          pilotUsername: _username.text.trim().replaceFirst(RegExp(r'^@'), ''));
+      _session = {
+        'token': result.driverToken,
+        'code': result.code,
+        'pilot': result.pilotUsername,
+        'finishing': false
+      };
+      await _store.saveSession('driver', _session);
+      _snapshot = null;
+      _ended = false;
+      _finishing = false;
+      _muted = false;
+      _lost = false;
+      _activeClock.reset();
+      _activeClock.stop();
+      _smoother.reset();
+      _lastAudioId = null;
+      _lastGeometryId = null;
+      _geometry = null;
+      if (gps && mounted) {
+        _location.start(pilot: false, notification: 'MagnusFly');
+      }
+      _startTimers();
+    } catch (e) {
+      _error = e.toString();
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
+  Future<void> _poll() async {
+    if (_pollBusy || _session == null) return;
+    _pollBusy = true;
+    try {
+      final token = _session!['token'] as String;
+      if (_finishing) await widget.apiClient.finishSession(token);
+      final watch = Stopwatch()..start();
+      final snapshot = await widget.apiClient.latestTelemetry(token);
+      if (!mounted) return;
+      _requestMs = watch.elapsedMilliseconds;
+      _snapshot = snapshot;
+      _receivedClock.reset();
+      _receivedClock.start();
+      _error = null;
+      if (snapshot.status == 'active' && !_activeClock.isRunning) {
+        _activeClock.start();
+      }
+      if (snapshot.status == 'ended') {
+        _finishing = true;
+        widget.varioAudio.dispose();
+        await _location.stop();
+        if (snapshot.pilotStopped) {
+          await _store.saveSession('driver', null);
+          _session = null;
+          _finishing = false;
+          _ended = true;
+          _pollTimer?.cancel();
+          _tickTimer?.cancel();
+        }
+      }
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _pollBusy = false;
+      if (mounted) {
+        _tick();
+        setState(() {});
+      }
+    }
+  }
+
+  void _tick() {
+    if (!mounted || _session == null) return;
+    final telemetry = _snapshot?.telemetry;
+    final lost = !_finishing &&
+        _activeClock.isRunning &&
+        (!_fresh && (_age != null || _activeClock.elapsedMilliseconds > 3000));
+    if (lost != _lost) {
+      _lost = lost;
+      if (!lost) _muted = false;
+      _lastAudioId = null;
+    }
+    if (!_finishing) widget.varioAudio.connectionLost(_lost, muted: _muted);
+    if (!_fresh) {
+      widget.varioAudio.stop();
+      _geometry = null;
+      _smoother.reset();
+      _lastGeometryId = null;
+    } else if (telemetry != null) {
+      if (_lastAudioId != telemetry.id) {
+        widget.varioAudio.update(
+            varioMetersPerSecond: telemetry.varioMps, telemetryFresh: true);
+        _lastAudioId = telemetry.id;
+      }
+      final now = DateTime.now();
+      final geometry = TowGeometry.calculate(
+          pilot: telemetry.positionAt(now, _age!),
+          driver: _location.latest,
+          aglMeters: telemetry.aglM,
+          now: now);
+      if (geometry == null) {
+        _geometry = null;
+        _smoother.reset();
+        _lastGeometryId = null;
+      } else if (_lastGeometryId != telemetry.id) {
+        _geometry = TowGeometry(geometry.horizontalMeters, geometry.ropeMeters,
+            _smoother.update(geometry.angleDegrees));
+        _lastGeometryId = telemetry.id;
+      }
+    }
+    if (_activeClock.isRunning && !_finishing) unawaited(_record());
+    setState(() {});
+  }
+
+  Future<void> _record() async {
+    final now = DateTime.now();
+    if (_recording ||
+        now.millisecondsSinceEpoch - _lastRecord < 1000 ||
+        _session == null) {
+      return;
+    }
+    _recording = true;
+    _lastRecord = now.millisecondsSinceEpoch;
+    try {
+      await _store.append(_code, {
+        'time': now.toIso8601String(),
+        'pilot': _session!['pilot'],
+        'agl': _fresh ? _snapshot?.telemetry?.aglM : null,
+        'vario': _fresh ? _snapshot?.telemetry?.varioMps : null,
+        'angle': _geometry?.angleDegrees,
+        'rope': _geometry?.ropeMeters,
+        'distance': _geometry?.horizontalMeters,
+        'lost': _lost,
+        'ageMs': _age,
+        'gps': _geometry != null
+      });
+      _historyError = false;
+    } catch (_) {
+      _historyError = true;
+    } finally {
+      _recording = false;
+    }
+  }
+
+  Future<void> _finish() async {
+    final l = AppLocalizations.of(context);
+    final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+                title: Text(l.towFinish),
+                content: Text(l.towConfirmFinish),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text(l.cancelButton)),
+                  FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: Text(l.towConfirm))
+                ]));
+    if (confirm != true || _session == null) return;
+    _session!['finishing'] = true;
+    _session!['endedAt'] = DateTime.now().toIso8601String();
+    _finishing = true;
+    widget.varioAudio.dispose();
+    await _location.stop();
+    try {
+      await _store.saveSession('driver', _session);
+      await _store.append(_code, {
+        'time': _session!['endedAt'],
+        'event': 'manual_finish',
+        'pilot': _session!['pilot']
+      });
+    } catch (_) {
+      _historyError = true;
+    }
+    if (mounted) setState(() {});
+    await _poll();
   }
 
   @override
   void dispose() {
-    _pilotUsernameController.dispose();
     _pollTimer?.cancel();
+    _tickTimer?.cancel();
+    _username.dispose();
     widget.varioAudio.dispose();
+    unawaited(_location.stop());
     super.dispose();
   }
 
-  Future<void> _createSession() async {
-    final pilotUsername = _pilotUsernameController.text.trim().toLowerCase();
-    if (pilotUsername.isEmpty) {
-      setState(() {
-        _error = AppLocalizations.of(context).driverPilotUsernameRequired;
-      });
-      return;
-    }
-
-    setState(() {
-      _isStarting = true;
-      _error = null;
-    });
-
-    try {
-      final session = await widget.apiClient.createSession(
-        pilotUsername: pilotUsername,
-      );
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _session = session;
-        _isStarting = false;
-        _error = null;
-      });
-      _pollTimer = Timer.periodic(
-        const Duration(milliseconds: 800),
-        (_) => unawaited(_pollLatestTelemetry()),
-      );
-      unawaited(_pollLatestTelemetry());
-    } on Object catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isStarting = false;
-        _error = error;
-      });
-    }
-  }
-
-  Future<void> _pollLatestTelemetry() async {
-    final session = _session;
-    if (session == null) {
-      return;
-    }
-
-    try {
-      final snapshot = await widget.apiClient.latestTelemetry(
-        session.driverToken,
-      );
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _snapshot = snapshot;
-        _error = null;
-      });
-      _updateVarioAudio(snapshot);
-    } on Object catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _error = error;
-      });
-      widget.varioAudio.stop();
-    }
-  }
-
-  void _updateVarioAudio(DriverTelemetrySnapshot snapshot) {
-    final telemetry = snapshot.telemetry;
-    widget.varioAudio.update(
-      varioMetersPerSecond: telemetry?.varioMps,
-      telemetryFresh: telemetry != null && telemetry.receivedAgeMs <= 3000,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final telemetry = _snapshot?.telemetry;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.driverScreenTitle),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            _DriverStatusBanner(
-              isStarting: _isStarting,
-              session: _session,
-              snapshot: _snapshot,
-              error: _error,
-            ),
-            const SizedBox(height: 24),
+    final l = AppLocalizations.of(context);
+    final t = _snapshot?.telemetry;
+    final status = _finishing
+        ? l.towFinishing
+        : _lost
+            ? l.towLost
+            : _ended
+                ? l.towEnded
+                : _session == null
+                    ? l.driverWaitingForSession
+                    : _snapshot?.status == 'active'
+                        ? l.driverReceivingTelemetry
+                        : l.driverWaitingForPilot;
+    final color = !_fresh || _geometry == null
+        ? Colors.grey
+        : switch (_geometry!.band) {
+            AngleBand.low => Colors.orange.shade800,
+            AngleBand.reference => Colors.green.shade700,
+            AngleBand.high => Colors.red.shade700,
+          };
+    return PopScope(
+        canPop: _session == null && !_busy,
+        child: Scaffold(
+          appBar: AppBar(title: Text(l.driverScreenTitle), actions: [
+            IconButton(
+                tooltip: l.towHistory,
+                icon: const Icon(Icons.history),
+                onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                        builder: (_) => TowHistoryScreen(store: _store)))),
+          ]),
+          body: SafeArea(
+              child: ListView(padding: const EdgeInsets.all(20), children: [
+            Row(children: [
+              Icon(_lost ? Icons.wifi_off : Icons.sensors,
+                  color: _lost ? Colors.red : null),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Text(status,
+                      style: Theme.of(context).textTheme.titleMedium))
+            ]),
+            if (_error != null)
+              Text(l.driverConnectionError,
+                  style: const TextStyle(color: Colors.red)),
+            if (_historyError)
+              Text(l.towHistoryError,
+                  style: const TextStyle(color: Colors.red)),
+            if (_busy) const LinearProgressIndicator(),
+            const SizedBox(height: 16),
             if (_session == null) ...[
               TextField(
-                controller: _pilotUsernameController,
-                textCapitalization: TextCapitalization.none,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: l10n.driverPilotUsernameLabel,
-                ),
-              ),
+                  controller: _username,
+                  decoration: InputDecoration(
+                      labelText: l.driverPilotUsernameLabel,
+                      border: const OutlineInputBorder())),
               const SizedBox(height: 12),
               FilledButton.icon(
-                onPressed: _isStarting ? null : _createSession,
-                icon: const Icon(Icons.play_arrow_outlined),
-                label: Text(l10n.driverCreateSession),
-              ),
-              const SizedBox(height: 24),
+                  onPressed: _busy ? null : _create,
+                  icon: const Icon(Icons.link),
+                  label: Text(l.driverCreateSession)),
+            ] else
+              Text('@${_session!['pilot']} · ${_session!['code']}'),
+            const SizedBox(height: 16),
+            LayoutBuilder(builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 650 ? 3 : 2;
+              final width =
+                  (constraints.maxWidth - (columns - 1) * 12) / columns;
+              return Wrap(spacing: 12, runSpacing: 12, children: [
+                _Metric(l.aglLabel, t?.aglM.toStringAsFixed(0) ?? '--', 'm',
+                    width, _fresh ? null : Colors.grey),
+                _Metric(l.varioLabel, t?.varioMps.toStringAsFixed(1) ?? '--',
+                    'm/s', width, _fresh ? null : Colors.grey),
+                _Metric(
+                    l.towAngle,
+                    _geometry?.angleDegrees.toStringAsFixed(0) ?? '--',
+                    _smoother.trend > 0
+                        ? '° ↑'
+                        : _smoother.trend < 0
+                            ? '° ↓'
+                            : '°',
+                    width,
+                    color),
+                _Metric(
+                    l.towRope,
+                    _geometry == null
+                        ? '--'
+                        : '≈ ${_geometry!.ropeMeters.round()}',
+                    'm',
+                    width,
+                    color),
+                _Metric(
+                    l.towDistance,
+                    _geometry?.horizontalMeters.toStringAsFixed(0) ?? '--',
+                    'm',
+                    width,
+                    color),
+                _Metric(
+                    l.delayLabel,
+                    _age == null ? '--' : (_age! / 1000).toStringAsFixed(1),
+                    's',
+                    width,
+                    _fresh ? null : Colors.grey),
+              ]);
+            }),
+            if (_session != null &&
+                !_finishing &&
+                _fresh &&
+                _geometry == null) ...[
+              const SizedBox(height: 12),
+              Text(l.towGps),
+              TextButton.icon(
+                  onPressed: () async {
+                    await _location.stop();
+                    if (!context.mounted) return;
+                    final gps = await prepareTowLocation(context, _location);
+                    if (gps && mounted && !_finishing && _session != null) {
+                      _location.start(pilot: false, notification: 'MagnusFly');
+                    }
+                  },
+                  icon: const Icon(Icons.gps_fixed),
+                  label: Text(l.towRetry)),
             ],
-            if (_session != null) _SessionCodePanel(code: _session!.code),
-            const SizedBox(height: 24),
             SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.driverVarioSoundLabel),
-              value: _audioEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _audioEnabled = value;
-                });
-                widget.varioAudio.enabled = value;
-                if (value && _snapshot != null) {
-                  _updateVarioAudio(_snapshot!);
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-            _DriverMetricGrid(
-              varioMetersPerSecond: telemetry?.varioMps,
-              aglMeters: telemetry?.aglM,
-              receivedAgeMs: telemetry?.receivedAgeMs,
-            ),
-          ],
-        ),
-      ),
-    );
+                contentPadding: EdgeInsets.zero,
+                title: Text(l.driverVarioSoundLabel),
+                value: _audio,
+                onChanged: (value) {
+                  setState(() => _audio = value);
+                  widget.varioAudio.enabled = value;
+                  _lastAudioId = null;
+                  _tick();
+                }),
+            if (_lost && !_finishing)
+              SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l.towMute),
+                  value: _muted,
+                  onChanged: (v) {
+                    setState(() => _muted = v);
+                    widget.varioAudio.connectionLost(true, muted: v);
+                  }),
+            if (_session != null)
+              FilledButton.icon(
+                  onPressed: _finishing ? null : _finish,
+                  icon: const Icon(Icons.stop_circle_outlined),
+                  label: Text(l.towFinish)),
+          ])),
+        ));
   }
 }
 
-class _DriverStatusBanner extends StatelessWidget {
-  const _DriverStatusBanner({
-    required this.isStarting,
-    required this.session,
-    required this.snapshot,
-    required this.error,
-  });
-
-  final bool isStarting;
-  final CreatedSession? session;
-  final DriverTelemetrySnapshot? snapshot;
-  final Object? error;
-
+class _Metric extends StatelessWidget {
+  const _Metric(this.label, this.value, this.unit, this.width, this.color);
+  final String label, value, unit;
+  final double width;
+  final Color? color;
   @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-    final isStale = (snapshot?.telemetry?.receivedAgeMs ?? 0) > 3000;
-    final (icon, text, color) = switch ((isStarting, session, error, isStale)) {
-      (_, _, final Object error, _) => (
-          Icons.error_outline,
-          '${l10n.driverConnectionError}: $error',
-          colorScheme.error,
-        ),
-      (true, _, _, _) => (
-          Icons.sync_outlined,
-          l10n.driverCreatingSession,
-          colorScheme.primary,
-        ),
-      (_, null, _, _) => (
-          Icons.pause_circle_outline,
-          l10n.driverWaitingForSession,
-          colorScheme.secondary,
-        ),
-      (_, _, _, true) => (
-          Icons.warning_amber_outlined,
-          l10n.driverTelemetryDelayed,
-          colorScheme.error,
-        ),
-      (_, final CreatedSession _, _, _) when snapshot?.telemetry == null => (
-          Icons.hourglass_empty_outlined,
-          l10n.driverWaitingForPilot,
-          colorScheme.primary,
-        ),
-      _ => (
-          Icons.sensors_outlined,
-          l10n.driverReceivingTelemetry,
-          colorScheme.primary,
-        ),
-    };
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(width: 12),
-            Expanded(child: Text(text)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SessionCodePanel extends StatelessWidget {
-  const _SessionCodePanel({required this.code});
-
-  final String code;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final textTheme = Theme.of(context).textTheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(l10n.driverSessionCodeLabel, style: textTheme.titleMedium),
-        const SizedBox(height: 8),
-        SelectableText(
-          code,
-          style: textTheme.displayMedium?.copyWith(
-            fontFeatures: const [],
-            letterSpacing: 0,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DriverMetricGrid extends StatelessWidget {
-  const _DriverMetricGrid({
-    required this.varioMetersPerSecond,
-    required this.aglMeters,
-    required this.receivedAgeMs,
-  });
-
-  final double? varioMetersPerSecond;
-  final double? aglMeters;
-  final int? receivedAgeMs;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.25,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      children: [
-        _DriverMetricTile(
-          label: l10n.varioLabel,
-          value: _formatSigned(varioMetersPerSecond),
-          unit: l10n.metersPerSecondUnit,
-        ),
-        _DriverMetricTile(
-          label: l10n.aglLabel,
-          value: _formatNumber(aglMeters),
-          unit: l10n.metersUnit,
-        ),
-        _DriverMetricTile(
-          label: l10n.delayLabel,
-          value: receivedAgeMs == null ? '--' : receivedAgeMs.toString(),
-          unit: l10n.millisecondsUnit,
-        ),
-      ],
-    );
-  }
-
-  String _formatNumber(double? value) {
-    return value == null ? '--' : value.toStringAsFixed(1);
-  }
-
-  String _formatSigned(double? value) {
-    if (value == null) {
-      return '--';
-    }
-
-    final prefix = value > 0 ? '+' : '';
-    return '$prefix${value.toStringAsFixed(1)}';
-  }
-}
-
-class _DriverMetricTile extends StatelessWidget {
-  const _DriverMetricTile({
-    required this.label,
-    required this.value,
-    required this.unit,
-  });
-
-  final String label;
-  final String value;
-  final String unit;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(label, style: textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Text(value, style: textTheme.headlineMedium),
-            Text(unit, style: textTheme.bodySmall),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SizedBox(
+      width: width,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 130),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            border: Border.all(
+                color: color ?? Theme.of(context).colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(8)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 12),
+          FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(value,
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineMedium
+                      ?.copyWith(color: color))),
+          Text(unit, style: TextStyle(color: color)),
+        ]),
+      ));
 }

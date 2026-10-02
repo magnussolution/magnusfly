@@ -14,6 +14,44 @@ class DriverVarioAudio {
   Timer? _timer;
   double? _varioMetersPerSecond;
   bool _enabled = true;
+  Timer? _alarmTimer;
+  bool _lost = false;
+  bool _muted = false;
+
+  void connectionLost(bool lost, {bool muted = false}) {
+    if (_lost == lost && _muted == muted) return;
+    final restored = _lost && !lost;
+    _lost = lost;
+    _muted = muted;
+    _alarmTimer?.cancel();
+    _alarmTimer = null;
+    if (lost) {
+      stop();
+      if (!muted) {
+        unawaited(_connectionTone());
+        _alarmTimer = Timer.periodic(
+            const Duration(seconds: 3), (_) => unawaited(_connectionTone()));
+      }
+    } else if (restored) {
+      unawaited(_tone(950, 120));
+    }
+  }
+
+  Future<void> _connectionTone() async {
+    await _tone(180, 450);
+  }
+
+  Future<void> _tone(double frequency, int duration) async {
+    try {
+      await _methodChannel.invokeMethod<void>('playBeep', {
+        'frequencyHz': frequency,
+        'durationMs': duration,
+        'volume': 0.8,
+      });
+    } on PlatformException {
+      /* Native audio may be temporarily unavailable. */
+    } on MissingPluginException {/* No audio backend in unit tests. */}
+  }
 
   bool get enabled => _enabled;
 
@@ -41,6 +79,10 @@ class DriverVarioAudio {
   }
 
   void dispose() {
+    _alarmTimer?.cancel();
+    _alarmTimer = null;
+    _lost = false;
+    _muted = false;
     stop();
   }
 
@@ -48,7 +90,7 @@ class DriverVarioAudio {
     _timer?.cancel();
     _timer = null;
 
-    if (!_enabled) {
+    if (!_enabled || _lost) {
       return;
     }
 

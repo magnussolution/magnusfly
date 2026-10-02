@@ -201,7 +201,8 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (context) => DriverScreen(),
+                    builder: (context) =>
+                        DriverScreen(username: profile.username),
                   ),
                 );
               },

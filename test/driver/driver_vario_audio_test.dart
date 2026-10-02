@@ -49,4 +49,32 @@ void main() {
 
     expect(calls, isEmpty);
   });
+
+  testWidgets(
+      'connection alarm is distinct, independently mutable and cancels on disposal',
+      (tester) async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return null;
+    });
+    final audio = DriverVarioAudio(methodChannel: channel);
+    audio.enabled = false;
+    audio.connectionLost(true);
+    await tester.pump();
+    expect(calls.single.arguments, containsPair('durationMs', 450));
+    audio.connectionLost(true, muted: true);
+    calls.clear();
+    await tester.pump(const Duration(seconds: 4));
+    expect(calls, isEmpty);
+    audio.connectionLost(false);
+    await tester.pump();
+    expect(calls.single.arguments, containsPair('durationMs', 120));
+    audio.connectionLost(true);
+    audio.dispose();
+    calls.clear();
+    await tester.pump(const Duration(seconds: 4));
+    expect(calls, isEmpty);
+  });
 }
